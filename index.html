@@ -190,7 +190,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <input type="password" id="inpPass" placeholder="Nhập mật khẩu..." autocomplete="current-password">
     </div>
     <button class="btn btn-pri btn-full btn-lg" onclick="doLogin()">🔐 Đăng nhập</button>
-    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">Quản trị: <strong>admin / Admin@2024</strong></div>
+
   </div>
 </div>
 
@@ -230,14 +230,10 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <strong id="segLabel">Đoạn 1</strong><span id="segLen">0 m</span>
     </div>
     <div id="ctrlIdle">
-      <!-- NÚT BẬT GPS NỔI BẬT — iOS cần người dùng bấm mới xin được quyền -->
-      <div id="gpsActivate" style="margin-bottom:10px;background:#E3F2FD;border-radius:10px;padding:12px;text-align:center">
-        <div style="font-size:13px;font-weight:700;color:#1565C0;margin-bottom:8px">📍 Bước 1: Bật GPS trước khi định vị</div>
-        <button class="btn btn-pri btn-full" style="font-size:15px;padding:14px" onclick="initBgGPS()">
-          🛰️ Bật GPS / Lấy vị trí hiện tại
-        </button>
+      <button class="btn btn-suc btn-full btn-lg" onclick="startTracking()">📍 Bắt đầu định vị tuyến mới</button>
+      <div id="gpsActivate" style="display:none;margin-top:8px">
+        <button class="btn btn-pri btn-full" onclick="retryGPS()">🛰️ Bật lại GPS</button>
       </div>
-      <button class="btn btn-suc btn-full btn-lg" onclick="startTracking()">📍 Bước 2: Bắt đầu định vị tuyến</button>
       <div id="gpsHelp" style="display:none;margin-top:10px;background:#FEF2F2;border-radius:10px;padding:12px;font-size:12px;color:#7f1d1d">
         <b style="font-size:13px">⛔ Chưa cấp quyền GPS</b>
         <div style="margin-top:10px;background:#fff;border-radius:8px;padding:12px;line-height:2;color:#1a1a2e">
@@ -447,10 +443,12 @@ const FBCFG = {
 firebase.initializeApp(FBCFG);
 const db = firebase.firestore();
 
-// Bật offline persistence (hoạt động khi mất sóng)
-db.enablePersistence({ synchronizeTabs: true })
-  .then(() => console.log('Offline persistence: ON'))
-  .catch(err => console.log('Persistence note:', err.code));
+// Bật offline persistence - KHÔNG dùng synchronizeTabs (iOS Safari không hỗ trợ)
+db.enablePersistence()
+  .catch(err => {
+    // Bỏ qua lỗi - không ảnh hưởng đến chức năng chính
+    console.log('Persistence note:', err.code);
+  });
 
 // ==================== CONSTANTS ====================
 const STYLES = {
@@ -479,18 +477,15 @@ let livePl = null;
 let posMk = null;
 
 // ==================== STARTUP ====================
-window.addEventListener('load', async () => {
-  setLoadStatus('Đang kết nối Firebase...');
-  try {
-    // Khởi tạo admin mặc định nếu chưa có
-    await initAdminUser();
-    setLoadStatus('Kết nối thành công! ✓');
-    setTimeout(() => showScreen('scLogin'), 600);
-  } catch(e) {
-    setLoadStatus('⚠️ Lỗi kết nối: ' + e.message);
-    // Vẫn cho vào login
-    setTimeout(() => showScreen('scLogin'), 2000);
-  }
+window.addEventListener('load', () => {
+  setLoadStatus('Đang khởi động...');
+  // Hiện màn hình login NGAY - không đợi Firebase
+  // Firebase sẽ tự kết nối trong nền, không block GPS
+  setTimeout(() => {
+    showScreen('scLogin');
+    // Khởi tạo admin trong nền, không await
+    initAdminUser().catch(e => console.log('Admin init:', e.message));
+  }, 800);
 });
 
 async function initAdminUser() {
@@ -499,7 +494,7 @@ async function initAdminUser() {
   if (!adminDoc.exists) {
     await adminRef.set({
       name: 'Quản trị viên — Sở Xây dựng Lào Cai',
-      password: 'Admin@2024',
+      password: 'a123456@',
       role: 'admin',
       district: 'Sở Xây dựng Lào Cai',
       code: 'admin',
@@ -560,8 +555,13 @@ async function initApp() {
   E('tbTitle').textContent = CU.role === 'admin' ? 'Quản trị — GTNT Lào Cai' : CU.name;
   E('tbSub').textContent = CU.role === 'admin' ? 'Quản trị viên — Sở Xây dựng Lào Cai' : (CU.district || 'Cán bộ xã/phường');
 
-  // Init map
-  setTimeout(() => { initMap(); setupRouteListener(); }, 150);
+  // Init map và GPS ngay lập tức
+  setTimeout(() => {
+    initMap();
+    setupRouteListener();
+    // Tự động bật GPS ngay khi vào bản đồ - iOS cho phép vì đây là sau user action (login)
+    setTimeout(initBgGPS, 300);
+  }, 150);
   updateUI();
   setSyncStatus('syncing', 'Đang tải dữ liệu...');
 }
@@ -924,9 +924,11 @@ function updateUI() {
   if(state==='idle') {
     d.className='s-dot idle';t.textContent='Sẵn sàng khảo sát tuyến đường';dist.textContent='';sb.style.display='none';
     E('ctrlIdle').style.display='block';
-    // Ẩn GPS activate nếu đã có GPS
-    const hasGPS = E('gpsDot').className.includes('gps-ok') || E('gpsDot').className.includes('gps-warn');
-    const ga = E('gpsActivate'); if(ga) ga.style.display = hasGPS ? 'none' : 'block';
+    // Hiện nút "Bật lại GPS" chỉ khi GPS lỗi
+    setTimeout(() => {
+      const hasErr = E('gpsDot').className.includes('gps-err');
+      const ga = E('gpsActivate'); if(ga) ga.style.display = hasErr ? 'block' : 'none';
+    }, 4000);
   } else if(state==='tracking') {
     d.className='s-dot tracking';t.textContent=cRoute?cRoute.tenTuyen:'Đang định vị…';
     sb.style.display='flex';
