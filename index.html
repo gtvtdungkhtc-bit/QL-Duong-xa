@@ -5,265 +5,181 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#1565C0">
-<meta name="apple-mobile-web-app-title" content="GTNT Lào Cai">
 <title>Quản lý GTNT Lào Cai</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --pri:#1565C0;--pri-d:#0D47A1;--pri-l:#E3F2FD;
-  --suc:#1B5E20;--suc-l:#E8F5E9;
-  --dan:#B71C1C;--dan-l:#FFEBEE;
-  --war:#BF360C;--war-l:#FBE9E7;
-  --yel:#F57F17;
-  --bg:#F0F4F8;--surf:#FFFFFF;--text:#1A1A2E;--muted:#64748B;--bor:#E2E8F0;
-  --shadow:0 2px 16px rgba(0,0,0,.12);--shadow-lg:0 8px 32px rgba(0,0,0,.18);
-  --r:12px;--r-sm:8px;
+  --suc:#1B5E20;--dan:#B71C1C;--war:#BF360C;
+  --bg:#F0F4F8;--surf:#FFF;--text:#1A1A2E;--muted:#64748B;--bor:#E2E8F0;
+  --shadow:0 2px 16px rgba(0,0,0,.12);--r:12px;--r-sm:8px;
 }
 html,body{height:100%;overflow:hidden;font-size:14px}
 body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text)}
 
-/* ===== SCREENS ===== */
 .screen{display:none;position:fixed;inset:0;z-index:10;overflow:hidden;background:var(--bg)}
 .screen.active{display:flex;flex-direction:column}
 
-/* ===== LOGIN ===== */
-#scLogin{
-  background:linear-gradient(160deg,#0D47A1 0%,#1565C0 45%,#1B5E20 100%);
-  justify-content:center;align-items:center;overflow-y:auto;padding:20px
-}
-.login-box{
-  background:var(--surf);border-radius:24px;padding:36px 28px;
-  width:min(400px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.35)
-}
-.login-logo{text-align:center;margin-bottom:28px}
-.login-logo .icon{font-size:52px;margin-bottom:10px;filter:drop-shadow(0 4px 8px rgba(0,0,0,.2))}
-.login-logo h1{font-size:20px;font-weight:800;color:var(--pri);line-height:1.4;letter-spacing:-.3px}
-.login-logo p{font-size:12px;color:var(--muted);margin-top:5px;font-weight:500}
-.login-hint{background:var(--pri-l);border-radius:var(--r-sm);padding:10px 14px;font-size:12px;color:var(--pri-d);margin-top:14px;text-align:center}
+/* LOADING */
+#scLoad{background:linear-gradient(160deg,#0D47A1,#1565C0 50%,#1B5E20);justify-content:center;align-items:center}
+.load-box{text-align:center;color:#fff}
+.load-icon{font-size:64px;margin-bottom:16px;animation:bounce 1.2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+.load-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.load-sub{font-size:13px;opacity:.75;margin-bottom:28px}
+.spinner{width:40px;height:40px;border:4px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-status{font-size:12px;opacity:.6;margin-top:12px}
 
-/* ===== FORM ELEMENTS ===== */
+/* LOGIN */
+#scLogin{background:linear-gradient(160deg,#0D47A1,#1565C0 50%,#1B5E20);justify-content:center;align-items:center;overflow-y:auto;padding:20px}
+.login-box{background:var(--surf);border-radius:24px;padding:36px 28px;width:min(400px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.35)}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .icon{font-size:52px;margin-bottom:10px}
+.login-logo h1{font-size:20px;font-weight:800;color:var(--pri);line-height:1.4}
+.login-logo p{font-size:12px;color:var(--muted);margin-top:5px}
+.sync-badge{display:inline-flex;align-items:center;gap:5px;background:#E8F5E9;color:#1B5E20;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700;margin-top:8px}
+
 .form-group{margin-bottom:14px}
 .form-group label{display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.6px}
-.form-group input,.form-group select,.form-group textarea{
-  width:100%;padding:11px 13px;border:2px solid var(--bor);border-radius:var(--r-sm);
-  font-size:14px;font-family:inherit;transition:border-color .15s,box-shadow .15s;background:var(--bg);color:var(--text)
-}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:11px 13px;border:2px solid var(--bor);border-radius:var(--r-sm);font-size:14px;font-family:inherit;transition:border-color .15s;background:var(--bg);color:var(--text)}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--pri);background:#fff;box-shadow:0 0 0 3px rgba(21,101,192,.1)}
 .form-group textarea{resize:vertical;min-height:60px}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 @media(max-width:360px){.form-row{grid-template-columns:1fr}}
 
-/* ===== BUTTONS ===== */
-.btn{
-  display:inline-flex;align-items:center;justify-content:center;gap:6px;
-  padding:11px 18px;border:none;border-radius:var(--r-sm);font-size:14px;font-weight:700;
-  cursor:pointer;transition:all .15s;font-family:inherit;line-height:1.2;letter-spacing:.1px
-}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border:none;border-radius:var(--r-sm);font-size:14px;font-weight:700;cursor:pointer;transition:all .15s;font-family:inherit;line-height:1.2}
 .btn:active{transform:scale(.96)}
-.btn-pri{background:var(--pri);color:#fff}
-.btn-pri:hover{background:var(--pri-d)}
+.btn-pri{background:var(--pri);color:#fff}.btn-pri:hover{background:var(--pri-d)}
 .btn-suc{background:var(--suc);color:#fff}
-.btn-suc:hover{background:#155724}
 .btn-dan{background:var(--dan);color:#fff}
-.btn-dan:hover{background:#7f1e1e}
 .btn-war{background:#E65100;color:#fff}
-.btn-war:hover{background:#BF360C}
 .btn-gray{background:#E2E8F0;color:var(--text)}
-.btn-gray:hover{background:#cbd5e0}
 .btn-outline{background:transparent;border:2px solid var(--pri);color:var(--pri)}
 .btn-full{width:100%}
 .btn-sm{padding:7px 11px;font-size:12px;border-radius:6px}
 .btn-lg{padding:15px 22px;font-size:15px}
 .btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important}
 
-/* ===== MAP SCREEN ===== */
+/* MAP */
 #scMap{padding:0}
 #map{width:100%;height:100%;position:absolute;inset:0;z-index:0}
-.leaflet-container{font-family:inherit}
-
-/* TOP BAR */
-.map-topbar{
-  position:absolute;top:0;left:0;right:0;z-index:500;
-  background:rgba(13,71,161,.96);backdrop-filter:blur(10px);
-  padding:10px 14px;display:flex;align-items:center;gap:10px;
-  box-shadow:0 2px 16px rgba(0,0,0,.25)
-}
+.map-topbar{position:absolute;top:0;left:0;right:0;z-index:500;background:rgba(13,71,161,.96);backdrop-filter:blur(10px);padding:10px 14px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 16px rgba(0,0,0,.25)}
 .map-topbar .info{flex:1;overflow:hidden}
 .map-topbar .title{color:#fff;font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .map-topbar .sub{color:rgba(255,255,255,.7);font-size:10px;margin-top:1px}
-.icon-btn{
-  width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);border:none;
-  color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0
-}
+.icon-btn{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.18);border:none;color:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .icon-btn:active{background:rgba(255,255,255,.3)}
 
-/* GPS INDICATOR */
-.gps-indicator{
-  position:absolute;top:58px;right:10px;z-index:500;
-  background:rgba(255,255,255,.97);border-radius:20px;padding:5px 11px;
-  font-size:11px;font-weight:700;box-shadow:var(--shadow);
-  display:flex;align-items:center;gap:5px;user-select:none
-}
-.gps-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.gps-ok{background:#16a34a;box-shadow:0 0 6px #16a34a}
-.gps-warn{background:#d97706;box-shadow:0 0 6px #d97706}
-.gps-err{background:#dc2626;box-shadow:0 0 6px #dc2626}
-@keyframes gpsblink{0%,100%{opacity:1}50%{opacity:.3}}
-.gps-dot.tracking{animation:gpsblink 1s infinite}
+/* SYNC STATUS */
+.sync-status{position:absolute;top:58px;right:10px;z-index:500;background:rgba(255,255,255,.97);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:700;box-shadow:var(--shadow);display:flex;align-items:center;gap:5px}
+.sync-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dot-online{background:#16a34a;box-shadow:0 0 6px #16a34a}
+.dot-offline{background:#d97706}
+.dot-syncing{background:#3b82f6;animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-/* LEGEND */
-.legend{
-  position:absolute;top:58px;left:10px;z-index:500;
-  background:rgba(255,255,255,.97);border-radius:12px;padding:10px 13px;
-  box-shadow:var(--shadow);font-size:11px;min-width:148px
-}
+.gps-indicator{position:absolute;top:58px;left:10px;z-index:500;background:rgba(255,255,255,.97);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:700;box-shadow:var(--shadow);display:flex;align-items:center;gap:5px}
+.gps-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.gps-ok{background:#16a34a}.gps-warn{background:#d97706}.gps-err{background:#dc2626}
+@keyframes gpsp{0%,100%{opacity:1}50%{opacity:.3}}
+.gps-dot.active{animation:gpsp 1s infinite}
+
+.legend{position:absolute;bottom:210px;right:10px;z-index:500;background:rgba(255,255,255,.97);border-radius:12px;padding:10px 13px;box-shadow:var(--shadow);font-size:11px;min-width:148px}
 .legend h4{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin-bottom:7px;font-weight:800}
 .legend-item{display:flex;align-items:center;gap:7px;margin-bottom:4px}
 .legend-line{height:4px;border-radius:2px;flex-shrink:0}
 
-/* BOTTOM PANEL */
-.map-bottom{
-  position:absolute;bottom:0;left:0;right:0;z-index:500;
-  background:rgba(255,255,255,.98);backdrop-filter:blur(12px);
-  border-radius:18px 18px 0 0;
-  box-shadow:0 -4px 24px rgba(0,0,0,.15);
-  padding:14px 14px 18px
-}
-.track-status{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 13px;border-radius:10px;background:var(--bg);margin-bottom:11px
-}
+.map-bottom{position:absolute;bottom:0;left:0;right:0;z-index:500;background:rgba(255,255,255,.98);backdrop-filter:blur(12px);border-radius:18px 18px 0 0;box-shadow:0 -4px 24px rgba(0,0,0,.15);padding:14px 14px 18px}
+.track-status{display:flex;align-items:center;gap:10px;padding:9px 13px;border-radius:10px;background:var(--bg);margin-bottom:11px}
 .s-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 .s-dot.idle{background:#94a3b8}
 .s-dot.tracking{background:#16a34a}
 .s-dot.paused{background:#d97706}
-@keyframes pulsedot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.5}}
-.s-dot.tracking{animation:pulsedot 1.2s infinite}
+@keyframes pdot{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.4);opacity:.5}}
+.s-dot.tracking{animation:pdot 1.2s infinite}
 .s-text{flex:1;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s-dist{font-size:13px;color:var(--pri);font-weight:800;flex-shrink:0}
-
-.seg-bar{
-  background:var(--pri-l);border-radius:8px;padding:8px 12px;
-  margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;
-  font-size:12px;color:var(--pri-d);display:none
-}
-.seg-bar strong{font-weight:800}
-
+.seg-bar{background:var(--pri-l);border-radius:8px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--pri-d)}
 .ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 
 /* MODALS */
-.modal-bg{
-  display:none;position:fixed;inset:0;z-index:600;
-  background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
-  align-items:flex-end;justify-content:center
-}
+.modal-bg{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);backdrop-filter:blur(3px);align-items:flex-end;justify-content:center}
 .modal-bg.active{display:flex}
-.modal-sheet{
-  background:var(--surf);border-radius:20px 20px 0 0;
-  width:100%;max-width:600px;max-height:92vh;overflow-y:auto;
-  padding:20px 18px 24px;box-shadow:var(--shadow-lg);
-  animation:slideup .25s ease
-}
-@keyframes slideup{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
+.modal-sheet{background:var(--surf);border-radius:20px 20px 0 0;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;padding:20px 18px 24px;box-shadow:0 -8px 32px rgba(0,0,0,.2);animation:sup .25s ease}
+@keyframes sup{from{transform:translateY(30px);opacity:.6}to{transform:translateY(0);opacity:1}}
 .modal-handle{width:38px;height:4px;background:var(--bor);border-radius:2px;margin:0 auto 16px}
-.modal-title{font-size:17px;font-weight:800;margin-bottom:16px;letter-spacing:-.2px}
+.modal-title{font-size:17px;font-weight:800;margin-bottom:16px}
 .divider{height:1px;background:var(--bor);margin:14px 0}
 
-/* ROUTE CARDS */
-.route-card{
-  background:var(--surf);border:1px solid var(--bor);border-radius:12px;
-  padding:13px 13px 13px 17px;margin-bottom:9px;position:relative;overflow:hidden;
-  box-shadow:0 1px 6px rgba(0,0,0,.06)
-}
+.route-card{background:var(--surf);border:1px solid var(--bor);border-radius:12px;padding:13px 13px 13px 17px;margin-bottom:9px;position:relative;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
 .route-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;border-radius:12px 0 0 12px}
-.rc-xa::before{background:#1565C0}
-.rc-thon::before{background:#2E7D32}
-.rc-dothi::before{background:#C62828}
-.rc-ngo::before{background:#E65100}
+.rc-xa::before{background:#1565C0}.rc-thon::before{background:#2E7D32}.rc-dothi::before{background:#C62828}.rc-ngo::before{background:#E65100}
 .rc-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px}
 .rc-name{font-weight:800;font-size:14px;line-height:1.3;flex:1}
 .badge{font-size:10px;padding:3px 8px;border-radius:20px;font-weight:700;white-space:nowrap;flex-shrink:0}
-.bxa{background:#DBEAFE;color:#1d4ed8}
-.bthon{background:#DCFCE7;color:#15803d}
-.bdothi{background:#FEE2E2;color:#b91c1c}
-.bngo{background:#FFEDD5;color:#c2410c}
+.bxa{background:#DBEAFE;color:#1d4ed8}.bthon{background:#DCFCE7;color:#15803d}.bdothi{background:#FEE2E2;color:#b91c1c}.bngo{background:#FFEDD5;color:#c2410c}
 .rc-meta{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--muted);margin-bottom:6px}
-.rc-points{font-size:11px;color:var(--muted);margin-bottom:7px}
-.rc-actions{display:flex;gap:6px;flex-wrap:wrap}
+.rc-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
 
-/* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
 .stat-box{background:var(--surf);border:1px solid var(--bor);border-radius:10px;padding:11px;text-align:center}
 .stat-val{font-size:20px;font-weight:900;color:var(--pri)}
 .stat-lbl{font-size:10px;color:var(--muted);font-weight:600;margin-top:2px;text-transform:uppercase;letter-spacing:.4px}
 
-/* USER CARDS */
-.user-row{
-  display:flex;align-items:center;gap:11px;padding:11px;
-  background:var(--surf);border:1px solid var(--bor);border-radius:10px;margin-bottom:7px
-}
-.ua{width:38px;height:38px;border-radius:50%;background:var(--pri-l);color:var(--pri);
-  display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.user-row{display:flex;align-items:center;gap:11px;padding:11px;background:var(--surf);border:1px solid var(--bor);border-radius:10px;margin-bottom:7px}
+.ua{width:38px;height:38px;border-radius:50%;background:var(--pri-l);color:var(--pri);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
 .ui{flex:1;min-width:0}
 .ui-name{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ui-sub{font-size:11px;color:var(--muted)}
 
-/* TABS */
 .tab-bar{display:flex;gap:4px;background:var(--bg);padding:4px;border-radius:10px;margin-bottom:14px}
 .tab-btn{flex:1;padding:8px;border:none;background:transparent;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer;color:var(--muted);transition:.15s;font-family:inherit}
 .tab-btn.active{background:var(--surf);color:var(--pri);box-shadow:0 1px 6px rgba(0,0,0,.1)}
-
-/* SEARCH */
-.search-input{
-  width:100%;padding:9px 12px;border:1px solid var(--bor);border-radius:8px;
-  font-size:13px;font-family:inherit;margin-bottom:12px;background:var(--surf)
-}
+.search-input{width:100%;padding:9px 12px;border:1px solid var(--bor);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:12px;background:var(--surf)}
 .search-input:focus{outline:none;border-color:var(--pri)}
-
-/* EMPTY */
 .empty{text-align:center;padding:36px 20px;color:var(--muted)}
 .empty .ei{font-size:44px;margin-bottom:10px}
 .empty p{font-size:13px}
 
-/* TOAST */
-.toast{
-  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);
-  background:#1A1A2E;color:#fff;padding:9px 18px;border-radius:20px;
-  font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:.25s;
-  white-space:nowrap;max-width:88vw;text-align:center;pointer-events:none
-}
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(12px);background:#1A1A2E;color:#fff;padding:9px 18px;border-radius:20px;font-size:12px;font-weight:600;z-index:9999;opacity:0;transition:.25s;white-space:nowrap;max-width:88vw;text-align:center;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* MENU */
-.menu-row{
-  display:flex;align-items:center;gap:12px;padding:13px;
-  border:1px solid var(--bor);border-radius:10px;cursor:pointer;
-  background:var(--surf);margin-bottom:7px;transition:background .15s
-}
+.menu-row{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--bor);border-radius:10px;cursor:pointer;background:var(--surf);margin-bottom:7px;transition:background .15s}
 .menu-row:active{background:var(--bg)}
 .menu-row .mi{font-size:20px;width:32px;text-align:center}
 .menu-row .mt{font-size:14px;font-weight:700}
 .menu-row .ms{font-size:11px;color:var(--muted)}
-
-/* Leaflet tooltip override */
-.road-tip{background:rgba(255,255,255,.95)!important;border:1px solid var(--bor)!important;
-  border-radius:6px!important;font-size:12px!important;font-weight:700!important;
-  padding:4px 9px!important;box-shadow:0 2px 8px rgba(0,0,0,.12)!important}
+.road-tip{background:rgba(255,255,255,.96)!important;border:1px solid var(--bor)!important;border-radius:6px!important;font-size:12px!important;font-weight:700!important;padding:4px 9px!important;box-shadow:0 2px 8px rgba(0,0,0,.12)!important}
 .road-tip::before{display:none!important}
+
+/* ONLINE USERS BADGE */
+.live-badge{display:inline-flex;align-items:center;gap:4px;background:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700}
+.live-dot{width:6px;height:6px;border-radius:50%;background:#16a34a;animation:blink 1s infinite}
 </style>
 </head>
 <body>
 
-<!-- ===================== LOGIN ===================== -->
-<div id="scLogin" class="screen active">
+<!-- LOADING SCREEN -->
+<div id="scLoad" class="screen active">
+  <div class="load-box">
+    <div class="load-icon">🗺️</div>
+    <div class="load-title">GTNT Lào Cai</div>
+    <div class="load-sub">Hệ thống quản lý hạ tầng giao thông nông thôn<br>Phòng Quản lý giao thông — Sở Xây dựng Lào Cai</div>
+    <div class="spinner"></div>
+    <div class="load-status" id="loadStatus">Đang kết nối máy chủ...</div>
+  </div>
+</div>
+
+<!-- LOGIN SCREEN -->
+<div id="scLogin" class="screen">
   <div class="login-box">
     <div class="login-logo">
       <div class="icon">🗺️</div>
       <h1>Quản lý Hạ tầng<br>Giao thông Nông thôn</h1>
-      <p>Sở Giao thông Vận tải tỉnh Lào Cai</p>
+      <p>Phòng Quản lý giao thông — Sở Xây dựng Lào Cai</p>
+      <div class="sync-badge">🔄 Đồng bộ thời gian thực — Firebase</div>
     </div>
     <div class="form-group">
       <label>Tên đăng nhập</label>
@@ -274,31 +190,29 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <input type="password" id="inpPass" placeholder="Nhập mật khẩu..." autocomplete="current-password">
     </div>
     <button class="btn btn-pri btn-full btn-lg" onclick="doLogin()">🔐 Đăng nhập</button>
-    <div class="login-hint">Tài khoản quản trị mặc định:<br><strong>admin / Admin@2024</strong></div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted)">Quản trị: <strong>admin / Admin@2024</strong></div>
   </div>
 </div>
 
-<!-- ===================== MAP ===================== -->
+<!-- MAP SCREEN -->
 <div id="scMap" class="screen">
   <div id="map"></div>
-
-  <!-- Top bar -->
   <div class="map-topbar">
     <div class="info">
       <div class="title" id="tbTitle">GTNT Lào Cai</div>
       <div class="sub" id="tbSub"></div>
     </div>
-    <button class="icon-btn" onclick="openRouteList()" title="Danh sách tuyến">📋</button>
-    <button class="icon-btn" onclick="openMenu()" title="Menu">☰</button>
+    <button class="icon-btn" onclick="openRouteList()">📋</button>
+    <button class="icon-btn" onclick="openMenu()">☰</button>
   </div>
-
-  <!-- GPS -->
   <div class="gps-indicator" id="gpsBox">
     <div class="gps-dot gps-warn" id="gpsDot"></div>
-    <span id="gpsLbl">Đang lấy GPS…</span>
+    <span id="gpsLbl">GPS...</span>
   </div>
-
-  <!-- Legend -->
+  <div class="sync-status" id="syncBox">
+    <div class="sync-dot dot-syncing" id="syncDot"></div>
+    <span id="syncLbl">Đang kết nối...</span>
+  </div>
   <div class="legend">
     <h4>Chú giải loại đường</h4>
     <div class="legend-item"><div class="legend-line" style="width:26px;background:#1565C0;height:5px"></div><span>Đường xã</span></div>
@@ -306,30 +220,24 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     <div class="legend-item"><div class="legend-line" style="width:26px;background:#C62828;height:6px"></div><span>Đường đô thị</span></div>
     <div class="legend-item"><div class="legend-line" style="width:26px;background:#E65100;height:2px;border-top:2px dashed #E65100"></div><span>Ngõ xóm / SX</span></div>
   </div>
-
-  <!-- Bottom control -->
-  <div class="map-bottom" id="mapBottom">
+  <div class="map-bottom">
     <div class="track-status">
       <div class="s-dot idle" id="sDot"></div>
       <div class="s-text" id="sText">Sẵn sàng khảo sát tuyến đường</div>
       <div class="s-dist" id="sDist"></div>
     </div>
-    <div class="seg-bar" id="segBar">
-      <strong id="segLabel">Đoạn 1</strong>
-      <span id="segLen">0 m</span>
+    <div class="seg-bar" id="segBar" style="display:none">
+      <strong id="segLabel">Đoạn 1</strong><span id="segLen">0 m</span>
     </div>
-    <!-- IDLE -->
     <div id="ctrlIdle">
       <button class="btn btn-suc btn-full btn-lg" onclick="startTracking()">📍 Bắt đầu định vị tuyến mới</button>
     </div>
-    <!-- TRACKING -->
     <div id="ctrlTrack" style="display:none">
       <div class="ctrl-grid">
         <button class="btn btn-war btn-lg" onclick="pauseTracking()">⏸ Kết thúc tạm thời</button>
         <button class="btn btn-dan btn-lg" onclick="endTracking()">🏁 Điểm cuối — Xong</button>
       </div>
     </div>
-    <!-- PAUSED -->
     <div id="ctrlPause" style="display:none">
       <div class="ctrl-grid">
         <button class="btn btn-suc btn-lg" onclick="resumeTracking()">▶ Tiếp tục đoạn mới</button>
@@ -339,9 +247,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
 </div>
 
-<!-- ===================== MODALS ===================== -->
-
-<!-- MENU -->
+<!-- ===== MODALS ===== -->
 <div class="modal-bg" id="mMenu">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
@@ -350,79 +256,37 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div>
         <div style="font-weight:800;font-size:15px" id="mName">—</div>
         <div style="font-size:12px;color:var(--muted)" id="mRole">—</div>
+        <div id="mSyncBadge" style="margin-top:4px"></div>
       </div>
     </div>
-    <div class="menu-row" onclick="closeModal('mMenu');openRouteList()">
-      <span class="mi">📋</span>
-      <div><div class="mt">Danh sách tuyến đã khảo sát</div><div class="ms">Xem, sửa, xóa các tuyến đường</div></div>
-    </div>
-    <div class="menu-row" id="mAdminRow" onclick="closeModal('mMenu');openAdmin()" style="display:none">
-      <span class="mi">⚙️</span>
-      <div><div class="mt">Quản lý tài khoản xã/phường</div><div class="ms">Tạo và quản lý 99 tài khoản</div></div>
-    </div>
-    <div class="menu-row" onclick="exportKML()">
-      <span class="mi">📥</span>
-      <div><div class="mt">Xuất file KML (Google Earth)</div><div class="ms">Tải file về để mở trên Google Earth/Maps</div></div>
-    </div>
+    <div class="menu-row" onclick="closeModal('mMenu');openRouteList()"><span class="mi">📋</span><div><div class="mt">Danh sách tuyến đã khảo sát</div><div class="ms">Xem, sửa, xóa các tuyến đường</div></div></div>
+    <div class="menu-row" id="mAdminRow" onclick="closeModal('mMenu');openAdmin()" style="display:none"><span class="mi">⚙️</span><div><div class="mt">Quản lý tài khoản xã/phường</div><div class="ms">Tạo và quản lý 99 tài khoản</div></div></div>
+    <div class="menu-row" onclick="exportKML()"><span class="mi">📥</span><div><div class="mt">Xuất file KML (Google Earth)</div><div class="ms">Tải file về mở trên Google Earth/Maps</div></div></div>
     <div class="divider"></div>
     <button class="btn btn-dan btn-full" onclick="doLogout()">🚪 Đăng xuất</button>
   </div>
 </div>
 
-<!-- ROUTE FORM (before tracking starts) -->
 <div class="modal-bg" id="mRouteForm">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">📝 Khai báo thông tin tuyến đường</div>
-    <div class="form-group">
-      <label>Loại đường *</label>
-      <select id="fLoai">
-        <option value="">— Chọn loại đường —</option>
-        <option value="Đường xã">Đường xã</option>
-        <option value="Đường thôn">Đường thôn</option>
-        <option value="Đường đô thị">Đường đô thị</option>
-        <option value="Đường ngõ xóm, đường ra khu sản xuất">Đường ngõ xóm, đường ra khu sản xuất</option>
-      </select>
+    <div class="form-group"><label>Loại đường *</label>
+      <select id="fLoai"><option value="">— Chọn loại đường —</option><option value="Đường xã">Đường xã</option><option value="Đường thôn">Đường thôn</option><option value="Đường đô thị">Đường đô thị</option><option value="Đường ngõ xóm, đường ra khu sản xuất">Đường ngõ xóm, đường ra khu sản xuất</option></select>
     </div>
-    <div class="form-group">
-      <label>Tên tuyến đường *</label>
-      <input type="text" id="fTen" placeholder="Ví dụ: Tuyến đường thôn Bản Pò — Bản Kẻo">
+    <div class="form-group"><label>Tên tuyến đường *</label><input type="text" id="fTen" placeholder="Ví dụ: Tuyến đường thôn Bản Pò — Bản Kẻo"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Điểm đầu</label><input type="text" id="fDau" placeholder="Tên/mô tả điểm đầu"></div>
+      <div class="form-group"><label>Điểm cuối (dự kiến)</label><input type="text" id="fCuoi" placeholder="Tên/mô tả điểm cuối"></div>
     </div>
     <div class="form-row">
-      <div class="form-group">
-        <label>Điểm đầu</label>
-        <input type="text" id="fDau" placeholder="Tên/mô tả điểm đầu">
-      </div>
-      <div class="form-group">
-        <label>Điểm cuối (dự kiến)</label>
-        <input type="text" id="fCuoi" placeholder="Tên/mô tả điểm cuối">
-      </div>
+      <div class="form-group"><label>Bề rộng nền đường (m)</label><input type="number" id="fNen" placeholder="m" step="0.1" min="0"></div>
+      <div class="form-group"><label>Bề rộng mặt đường (m)</label><input type="number" id="fMat" placeholder="m" step="0.1" min="0"></div>
     </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>Bề rộng nền đường (m)</label>
-        <input type="number" id="fNen" placeholder="m" step="0.1" min="0">
-      </div>
-      <div class="form-group">
-        <label>Bề rộng mặt đường (m)</label>
-        <input type="number" id="fMat" placeholder="m" step="0.1" min="0">
-      </div>
+    <div class="form-group"><label>Loại mặt đường (đoạn đầu tiên) *</label>
+      <select id="fMatLoai"><option value="">— Chọn loại mặt đường —</option><option value="BTN">BTN — Bê tông nhựa</option><option value="Láng nhựa">Láng nhựa</option><option value="BTXM">BTXM — Bê tông xi măng</option><option value="Cấp phối">Cấp phối</option><option value="Đất">Đất</option></select>
     </div>
-    <div class="form-group">
-      <label>Loại mặt đường (đoạn đầu tiên) *</label>
-      <select id="fMatLoai">
-        <option value="">— Chọn loại mặt đường —</option>
-        <option value="BTN">BTN — Bê tông nhựa</option>
-        <option value="Láng nhựa">Láng nhựa</option>
-        <option value="BTXM">BTXM — Bê tông xi măng</option>
-        <option value="Cấp phối">Cấp phối</option>
-        <option value="Đất">Đất</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Ghi chú</label>
-      <textarea id="fGhi" placeholder="Ghi chú thêm về tuyến đường…"></textarea>
-    </div>
+    <div class="form-group"><label>Ghi chú</label><textarea id="fGhi" placeholder="Ghi chú thêm..."></textarea></div>
     <div style="display:flex;gap:8px;margin-top:4px">
       <button class="btn btn-gray" style="flex:1" onclick="closeModal('mRouteForm')">Hủy</button>
       <button class="btn btn-suc" style="flex:2" onclick="confirmStart()">📍 Bắt đầu định vị GPS</button>
@@ -430,21 +294,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
 </div>
 
-<!-- RESUME (chọn mặt đường đoạn tiếp) -->
 <div class="modal-bg" id="mResume">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">🔄 Đoạn đường tiếp theo</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Chọn loại mặt đường cho đoạn tiếp theo (đoạn <span id="resumeSegN">2</span>)</p>
-    <div class="form-group">
-      <label>Loại mặt đường đoạn tiếp *</label>
-      <select id="rMatLoai">
-        <option value="BTN">BTN — Bê tông nhựa</option>
-        <option value="Láng nhựa">Láng nhựa</option>
-        <option value="BTXM">BTXM — Bê tông xi măng</option>
-        <option value="Cấp phối">Cấp phối</option>
-        <option value="Đất">Đất</option>
-      </select>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Chọn loại mặt đường cho đoạn <span id="resumeN">2</span></p>
+    <div class="form-group"><label>Loại mặt đường *</label>
+      <select id="rMat"><option value="BTN">BTN — Bê tông nhựa</option><option value="Láng nhựa">Láng nhựa</option><option value="BTXM">BTXM — Bê tông xi măng</option><option value="Cấp phối">Cấp phối</option><option value="Đất">Đất</option></select>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-gray" style="flex:1" onclick="closeModal('mResume')">Hủy</button>
@@ -453,35 +309,30 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
 </div>
 
-<!-- END CONFIRM -->
 <div class="modal-bg" id="mEnd">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
     <div class="modal-title">🏁 Xác nhận hoàn thành khảo sát</div>
-    <div id="endSummary" style="background:var(--bg);border-radius:10px;padding:13px;margin-bottom:14px;font-size:13px;line-height:1.7"></div>
-    <div class="form-group">
-      <label>Chiều dài tuyến (km) — tự tính, có thể chỉnh lại</label>
-      <input type="number" id="eDai" step="0.001" min="0">
-    </div>
-    <div class="form-group">
-      <label>Điểm cuối (địa danh/mô tả)</label>
-      <input type="text" id="eCuoi" placeholder="Tên/mô tả điểm cuối thực tế">
-    </div>
+    <div id="endSum" style="background:var(--bg);border-radius:10px;padding:13px;margin-bottom:14px;font-size:13px;line-height:1.7"></div>
+    <div class="form-group"><label>Chiều dài tuyến (km) — tự tính, có thể chỉnh</label><input type="number" id="eDai" step="0.001" min="0"></div>
+    <div class="form-group"><label>Điểm cuối (địa danh/mô tả)</label><input type="text" id="eCuoi" placeholder="Tên/mô tả điểm cuối thực tế"></div>
     <div style="display:flex;gap:8px">
-      <button class="btn btn-gray" style="flex:1" onclick="cancelEnd()">← Tiếp tục định vị</button>
-      <button class="btn btn-pri" style="flex:2" onclick="confirmEnd()">✅ Lưu tuyến đường</button>
+      <button class="btn btn-gray" style="flex:1" onclick="cancelEnd()">← Tiếp tục</button>
+      <button class="btn btn-pri" style="flex:2" id="btnSave" onclick="confirmEnd()">☁️ Lưu lên Cloud</button>
     </div>
   </div>
 </div>
 
-<!-- ROUTE LIST -->
 <div class="modal-bg" id="mRouteList">
   <div class="modal-sheet" style="max-height:94vh">
     <div class="modal-handle"></div>
-    <div class="modal-title">📋 Tuyến đường đã khảo sát</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div class="modal-title" style="margin:0">📋 Tuyến đường đã khảo sát</div>
+      <div id="rlLive"></div>
+    </div>
     <div id="rlStats" class="stats-row"></div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
-      <input type="text" class="search-input" style="margin:0;flex:1" id="rlSearch" placeholder="🔍 Tìm tên tuyến, điểm đầu…" oninput="renderRoutes()">
+      <input type="text" class="search-input" style="margin:0;flex:1" id="rlSearch" placeholder="🔍 Tìm tên tuyến..." oninput="renderRoutes()">
       <select class="search-input" style="margin:0;width:auto;padding:9px 8px" id="rlFilter" onchange="renderRoutes()">
         <option value="">Tất cả</option>
         <option value="Đường xã">Đường xã</option>
@@ -495,7 +346,6 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
 </div>
 
-<!-- ADMIN -->
 <div class="modal-bg" id="mAdmin">
   <div class="modal-sheet" style="max-height:94vh">
     <div class="modal-handle"></div>
@@ -505,7 +355,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <button class="tab-btn" id="tAdd" onclick="switchTab('add')">➕ Thêm mới</button>
     </div>
     <div id="tabUsers">
-      <input type="text" class="search-input" id="uSearch" placeholder="🔍 Tìm xã/phường…" oninput="renderUsers()">
+      <input type="text" class="search-input" id="uSearch" placeholder="🔍 Tìm xã/phường..." oninput="renderUsers()">
       <div id="uList"></div>
     </div>
     <div id="tabAdd" style="display:none">
@@ -522,20 +372,13 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
 </div>
 
-<!-- EDIT ROUTE -->
 <div class="modal-bg" id="mEdit">
   <div class="modal-sheet" style="max-height:94vh">
     <div class="modal-handle"></div>
     <div class="modal-title">✏️ Chỉnh sửa thông tin tuyến</div>
     <input type="hidden" id="eRid">
-    <div class="form-group">
-      <label>Loại đường *</label>
-      <select id="eeLoai">
-        <option value="Đường xã">Đường xã</option>
-        <option value="Đường thôn">Đường thôn</option>
-        <option value="Đường đô thị">Đường đô thị</option>
-        <option value="Đường ngõ xóm, đường ra khu sản xuất">Đường ngõ xóm, đường ra khu sản xuất</option>
-      </select>
+    <div class="form-group"><label>Loại đường *</label>
+      <select id="eeLoai"><option value="Đường xã">Đường xã</option><option value="Đường thôn">Đường thôn</option><option value="Đường đô thị">Đường đô thị</option><option value="Đường ngõ xóm, đường ra khu sản xuất">Đường ngõ xóm, đường ra khu sản xuất</option></select>
     </div>
     <div class="form-group"><label>Tên tuyến đường *</label><input type="text" id="eeTen"></div>
     <div class="form-row">
@@ -548,13 +391,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     </div>
     <div class="form-row">
       <div class="form-group"><label>Bề rộng mặt (m)</label><input type="number" id="eeMat" step="0.1" min="0"></div>
-      <div class="form-group">
-        <label>Loại mặt đường</label>
-        <select id="eeMatLoai">
-          <option value="BTN">BTN</option><option value="Láng nhựa">Láng nhựa</option>
-          <option value="BTXM">BTXM</option><option value="Cấp phối">Cấp phối</option>
-          <option value="Đất">Đất</option>
-        </select>
+      <div class="form-group"><label>Loại mặt đường</label>
+        <select id="eeMatLoai"><option value="BTN">BTN</option><option value="Láng nhựa">Láng nhựa</option><option value="BTXM">BTXM</option><option value="Cấp phối">Cấp phối</option><option value="Đất">Đất</option></select>
       </div>
     </div>
     <div class="form-group"><label>Ghi chú</label><textarea id="eeGhi" rows="2"></textarea></div>
@@ -567,8 +405,29 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 
 <div class="toast" id="toast"></div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
 <script>
+// ==================== FIREBASE INIT ====================
+const FBCFG = {
+  apiKey: "AIzaSyAhG8wOfeJWLzzt_JxTWUaknBEHzKCe-oM",
+  authDomain: "gtnt-laocai.firebaseapp.com",
+  projectId: "gtnt-laocai",
+  storageBucket: "gtnt-laocai.firebasestorage.app",
+  messagingSenderId: "59368054443",
+  appId: "1:59368054443:web:ab16ae656a93c7c09da1ee"
+};
+firebase.initializeApp(FBCFG);
+const db = firebase.firestore();
+
+// Bật offline persistence (hoạt động khi mất sóng)
+db.enablePersistence({ synchronizeTabs: true })
+  .then(() => console.log('Offline persistence: ON'))
+  .catch(err => console.log('Persistence note:', err.code));
+
 // ==================== CONSTANTS ====================
 const STYLES = {
   'Đường xã':     { color:'#1565C0', weight:5, dash:null },
@@ -576,300 +435,392 @@ const STYLES = {
   'Đường đô thị': { color:'#C62828', weight:6, dash:null },
   'Đường ngõ xóm, đường ra khu sản xuất': { color:'#E65100', weight:2, dash:'6,4' }
 };
-const RC = {
-  'Đường xã':'rc-xa','Đường thôn':'rc-thon','Đường đô thị':'rc-dothi',
-  'Đường ngõ xóm, đường ra khu sản xuất':'rc-ngo'
-};
-const BD = {
-  'Đường xã':'bxa','Đường thôn':'bthon','Đường đô thị':'bdothi',
-  'Đường ngõ xóm, đường ra khu sản xuất':'bngo'
-};
+const RC = { 'Đường xã':'rc-xa','Đường thôn':'rc-thon','Đường đô thị':'rc-dothi','Đường ngõ xóm, đường ra khu sản xuất':'rc-ngo' };
+const BD = { 'Đường xã':'bxa','Đường thôn':'bthon','Đường đô thị':'bdothi','Đường ngõ xóm, đường ra khu sản xuất':'bngo' };
 
-// ==================== STORAGE ====================
-function defaultDB(){
-  return{users:{admin:{password:'Admin@2024',role:'admin',name:'Quản trị viên — Sở GTVT Lào Cai',district:'',code:'admin'}},routes:{}};
+// ==================== STATE ====================
+let CU = null;          // current user
+let routeCache = {};    // routeId => routeData (từ Firestore)
+let userCache = {};     // username => userData (từ Firestore)
+let routeListener = null; // Firestore real-time listener
+let mapLayers = {};     // routeId => [leaflet layers]
+let map = null;
+
+// tracking state
+let state = 'idle';
+let watchId = null;
+let cRoute = null;
+let cSeg = null;
+let livePl = null;
+let posMk = null;
+
+// ==================== STARTUP ====================
+window.addEventListener('load', async () => {
+  setLoadStatus('Đang kết nối Firebase...');
+  try {
+    // Khởi tạo admin mặc định nếu chưa có
+    await initAdminUser();
+    setLoadStatus('Kết nối thành công! ✓');
+    setTimeout(() => showScreen('scLogin'), 600);
+  } catch(e) {
+    setLoadStatus('⚠️ Lỗi kết nối: ' + e.message);
+    // Vẫn cho vào login
+    setTimeout(() => showScreen('scLogin'), 2000);
+  }
+});
+
+async function initAdminUser() {
+  const adminRef = db.collection('users').doc('admin');
+  const adminDoc = await adminRef.get();
+  if (!adminDoc.exists) {
+    await adminRef.set({
+      name: 'Quản trị viên — Sở Xây dựng Lào Cai',
+      password: 'Admin@2024',
+      role: 'admin',
+      district: 'Sở Xây dựng Lào Cai',
+      code: 'admin',
+      communeId: 'admin',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }
 }
-let DB = (()=>{ try{return JSON.parse(localStorage.getItem('gtnt_lc')||'null')||defaultDB()}catch{return defaultDB()} })();
-const save = ()=> localStorage.setItem('gtnt_lc', JSON.stringify(DB));
+
+function setLoadStatus(msg) {
+  const el = document.getElementById('loadStatus');
+  if(el) el.textContent = msg;
+}
 
 // ==================== AUTH ====================
-let CU = null; // current user
+async function doLogin() {
+  const u = V('inpUser').trim(), p = V('inpPass');
+  if(!u || !p) { toast('Vui lòng nhập đầy đủ thông tin'); return; }
 
-function doLogin(){
-  const u=V('inpUser'),p=V('inpPass');
-  if(!u||!p){toast('Vui lòng nhập đầy đủ thông tin');return}
-  const usr=DB.users[u];
-  if(!usr||usr.password!==p){toast('❌ Sai tên đăng nhập hoặc mật khẩu');return}
-  CU={username:u,...usr};
-  initApp();
+  const btn = document.querySelector('#scLogin .btn');
+  btn.disabled = true; btn.textContent = '⏳ Đang kiểm tra...';
+
+  try {
+    const userDoc = await db.collection('users').doc(u).get();
+    if (!userDoc.exists || userDoc.data().password !== p) {
+      toast('❌ Sai tên đăng nhập hoặc mật khẩu');
+      btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
+      return;
+    }
+    CU = { username: u, ...userDoc.data() };
+    btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
+    await initApp();
+  } catch(e) {
+    toast('⚠️ Lỗi kết nối: ' + e.message);
+    btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
+  }
 }
-function doLogout(){
-  if(state!=='idle'&&!confirm('Đang định vị! Dữ liệu chưa lưu sẽ mất. Vẫn đăng xuất?'))return;
+
+function doLogout() {
+  if(state !== 'idle' && !confirm('Đang định vị! Dữ liệu chưa lưu sẽ mất. Vẫn đăng xuất?')) return;
   stopGPS();
-  CU=null;
+  if(routeListener) { routeListener(); routeListener = null; }
+  routeCache = {}; userCache = {};
+  CU = null;
   closeAll();
   showScreen('scLogin');
-  E('inpUser').value='';E('inpPass').value='';
+  E('inpUser').value = ''; E('inpPass').value = '';
 }
-E('inpPass').addEventListener('keyup',e=>{if(e.key==='Enter')doLogin()});
+
+E('inpPass').addEventListener('keyup', e => { if(e.key === 'Enter') doLogin(); });
+
+// ==================== APP INIT ====================
+async function initApp() {
+  showScreen('scMap');
+
+  // Update topbar
+  E('tbTitle').textContent = CU.role === 'admin' ? 'Quản trị — GTNT Lào Cai' : CU.name;
+  E('tbSub').textContent = CU.role === 'admin' ? 'Quản trị viên — Sở Xây dựng Lào Cai' : (CU.district || 'Cán bộ xã/phường');
+
+  // Init map
+  setTimeout(() => { initMap(); setupRouteListener(); }, 150);
+  updateUI();
+  setSyncStatus('syncing', 'Đang tải dữ liệu...');
+}
+
+// ==================== FIRESTORE REALTIME ====================
+function setupRouteListener() {
+  if(routeListener) { routeListener(); routeListener = null; }
+
+  let query = CU.role === 'admin'
+    ? db.collection('routes').orderBy('createdAt', 'desc')
+    : db.collection('routes').where('communeId', '==', CU.communeId || CU.username).orderBy('createdAt', 'desc');
+
+  routeListener = query.onSnapshot(snapshot => {
+    snapshot.docChanges().forEach(change => {
+      const data = { id: change.doc.id, ...change.doc.data() };
+      if(change.type === 'added' || change.type === 'modified') {
+        routeCache[change.doc.id] = data;
+        if(map) { removeMapLayer(change.doc.id); renderRoute(data); }
+      }
+      if(change.type === 'removed') {
+        delete routeCache[change.doc.id];
+        removeMapLayer(change.doc.id);
+      }
+    });
+    setSyncStatus('online', `🔄 ${Object.keys(routeCache).length} tuyến — Đồng bộ`);
+    // Refresh list nếu đang mở
+    if(E('mRouteList').classList.contains('active')) renderRoutes();
+  }, err => {
+    console.error('Firestore error:', err);
+    setSyncStatus('offline', 'Mất kết nối — Dữ liệu cục bộ');
+  });
+}
+
+function setSyncStatus(status, msg) {
+  const dot = E('syncDot'), lbl = E('syncLbl');
+  dot.className = 'sync-dot ' + (status === 'online' ? 'dot-online' : status === 'offline' ? 'dot-offline' : 'dot-syncing');
+  lbl.textContent = msg;
+}
 
 // ==================== MAP ====================
-let map=null,layers={};
-
-function initMap(){
-  if(map)return;
-  map=L.map('map',{center:[22.47,103.97],zoom:11,zoomControl:false});
-  const osm=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OSM',maxZoom:19});
-  const sat=L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'© Esri',maxZoom:19});
+function initMap() {
+  if(map) return;
+  map = L.map('map', { center:[22.47,103.97], zoom:11, zoomControl:false });
+  const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution:'© OSM', maxZoom:19 });
+  const sat = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution:'© Esri', maxZoom:19 });
   L.control.layers({'🗺️ Bản đồ đường':osm,'🛰️ Ảnh vệ tinh':sat},{},{position:'bottomright'}).addTo(map);
   osm.addTo(map);
   L.control.zoom({position:'bottomright'}).addTo(map);
-  navigator.geolocation.getCurrentPosition(p=>map.setView([p.coords.latitude,p.coords.longitude],14),()=>{});
+  navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 14), ()=>{});
 }
 
-function renderAllRoutes(){
-  Object.values(layers).flat().forEach(l=>map.removeLayer(l));
-  layers={};
-  visRoutes().forEach(r=>renderRoute(r));
-}
-
-function renderRoute(r){
-  if(!r.segments||!r.segments.length)return;
-  const s=STYLES[r.loaiDuong]||{color:'#9CA3AF',weight:3,dash:null};
-  const ls=[];
-  r.segments.forEach(seg=>{
-    if(!seg.points||seg.points.length<2)return;
-    const ll=seg.points.map(p=>[p.lat,p.lng]);
-    const pl=L.polyline(ll,{color:s.color,weight:s.weight,opacity:.88,dashArray:s.dash});
+function renderRoute(r) {
+  if(!r.segments || !r.segments.length) return;
+  const s = STYLES[r.loaiDuong] || { color:'#9CA3AF', weight:3, dash:null };
+  const ls = [];
+  r.segments.forEach(seg => {
+    if(!seg.points || seg.points.length < 2) return;
+    const pl = L.polyline(seg.points.map(p => [p.lat, p.lng]), {
+      color:s.color, weight:s.weight, opacity:.88, dashArray:s.dash
+    });
     pl.bindTooltip(`<b>${r.tenTuyen||'Chưa đặt tên'}</b><br><small>${r.loaiDuong}</small>`,
-      {sticky:true,className:'road-tip'});
-    pl.bindPopup(`<b>${r.tenTuyen||'Chưa đặt tên'}</b><br>
-      <small>
+      { sticky:true, className:'road-tip' });
+    pl.bindPopup(`<b>${r.tenTuyen||'Chưa đặt tên'}</b><br><small>
       📌 <b>Loại:</b> ${r.loaiDuong}<br>
-      📏 <b>Chiều dài:</b> ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}<br>
+      📏 <b>Dài:</b> ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}<br>
       🛣️ <b>Mặt đường:</b> ${seg.loaiMat||r.loaiMatLoai||'N/A'}<br>
-      ↔️ <b>Nền/mặt:</b> ${r.beNen||'?'}m / ${r.beMat||'?'}m<br>
-      📍 ${r.diemDau||'?'} → ${r.diemCuoi||'?'}
+      ↔️ <b>Nền/Mặt:</b> ${r.beNen||'?'}m / ${r.beMat||'?'}m<br>
+      📍 ${r.diemDau||'?'} → ${r.diemCuoi||'?'}<br>
+      🏘️ ${r.communeName||r.communeId||''}
       </small>`);
     pl.addTo(map);
     ls.push(pl);
   });
-  layers[r.id]=ls;
+  mapLayers[r.id] = ls;
 }
 
-function removeRoute(id){
-  (layers[id]||[]).forEach(l=>map.removeLayer(l));
-  delete layers[id];
+function removeMapLayer(id) {
+  (mapLayers[id] || []).forEach(l => map && map.removeLayer(l));
+  delete mapLayers[id];
 }
 
 // ==================== GPS ====================
-let state='idle',watchId=null,cRoute=null,cSeg=null,livePl=null,posMk=null;
-
-function updateGPS(pos,err){
-  const dot=E('gpsDot'),lbl=E('gpsLbl');
-  if(err){dot.className='gps-dot gps-err';lbl.textContent='GPS lỗi';return}
-  if(!pos){dot.className='gps-dot gps-warn';lbl.textContent='Đang lấy GPS…';return}
-  const a=Math.round(pos.coords.accuracy);
-  dot.className=a<15?'gps-dot gps-ok tracking':a<50?'gps-dot gps-warn tracking':'gps-dot gps-err tracking';
-  lbl.textContent=`±${a}m`;
+function updateGPS(pos, err) {
+  const dot = E('gpsDot'), lbl = E('gpsLbl');
+  if(err) { dot.className = 'gps-dot gps-err'; lbl.textContent = 'GPS lỗi'; return; }
+  if(!pos) { dot.className = 'gps-dot gps-warn'; lbl.textContent = 'GPS...'; return; }
+  const a = Math.round(pos.coords.accuracy);
+  dot.className = (a<15?'gps-dot gps-ok':a<50?'gps-dot gps-warn':'gps-dot gps-err') + ' active';
+  lbl.textContent = `±${a}m`;
 }
 
-function startGPS(){
-  if(!navigator.geolocation){toast('❌ Thiết bị không hỗ trợ GPS');return false}
-  watchId=navigator.geolocation.watchPosition(onPos,e=>updateGPS(null,e),{enableHighAccuracy:true,maximumAge:2000,timeout:15000});
+function startGPS() {
+  if(!navigator.geolocation) { toast('❌ Thiết bị không hỗ trợ GPS'); return false; }
+  watchId = navigator.geolocation.watchPosition(onPos, e=>updateGPS(null,e),
+    { enableHighAccuracy:true, maximumAge:2000, timeout:15000 });
   return true;
 }
-function stopGPS(){if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null}}
+function stopGPS() { if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;} }
 
-function onPos(pos){
-  updateGPS(pos,null);
-  const ll=[pos.coords.latitude,pos.coords.longitude];
-  if(!posMk){
-    posMk=L.circleMarker(ll,{radius:8,color:'#fff',weight:3,fillColor:'#1565C0',fillOpacity:1}).addTo(map);
+function onPos(pos) {
+  updateGPS(pos, null);
+  const ll = [pos.coords.latitude, pos.coords.longitude];
+  if(!posMk) {
+    posMk = L.circleMarker(ll, { radius:8,color:'#fff',weight:3,fillColor:'#1565C0',fillOpacity:1 }).addTo(map);
   } else posMk.setLatLng(ll);
-  if(state==='tracking'&&cSeg){
-    const last=cSeg.points[cSeg.points.length-1];
-    if(!last||hav(last.lat,last.lng,pos.coords.latitude,pos.coords.longitude)>0.003){
-      cSeg.points.push({lat:pos.coords.latitude,lng:pos.coords.longitude,t:Date.now()});
-      if(livePl)livePl.setLatLngs(cSeg.points.map(p=>[p.lat,p.lng]));
+
+  if(state === 'tracking' && cSeg) {
+    const last = cSeg.points[cSeg.points.length-1];
+    if(!last || hav(last.lat,last.lng,pos.coords.latitude,pos.coords.longitude) > 0.003) {
+      cSeg.points.push({ lat:pos.coords.latitude, lng:pos.coords.longitude, t:Date.now() });
+      if(livePl) livePl.setLatLngs(cSeg.points.map(p=>[p.lat,p.lng]));
       refreshDist();
     }
   }
 }
 
-function hav(a,b,c,d){
+function hav(a,b,c,d) {
   const R=6371,da=(c-a)*Math.PI/180,db=(d-b)*Math.PI/180;
-  return R*2*Math.atan2(Math.sqrt(Math.sin(da/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(db/2)**2),Math.sqrt(1-Math.sin(da/2)**2-Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(db/2)**2));
+  const x=Math.sin(da/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(db/2)**2;
+  return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
 }
-function segLen(seg){let d=0;for(let i=1;i<seg.points.length;i++)d+=hav(seg.points[i-1].lat,seg.points[i-1].lng,seg.points[i].lat,seg.points[i].lng);return d}
-function totalLen(r){return(r.segments||[]).reduce((a,s)=>a+segLen(s),0)}
+function segLen(seg) { let d=0; for(let i=1;i<seg.points.length;i++) d+=hav(seg.points[i-1].lat,seg.points[i-1].lng,seg.points[i].lat,seg.points[i].lng); return d; }
+function totalLen(r) { return (r.segments||[]).reduce((a,s)=>a+segLen(s),0); }
 
-function refreshDist(){
-  const sl=(cRoute.segments||[]).reduce((a,s)=>a+segLen(s),0);
-  const cl=cSeg?segLen(cSeg):0;
-  const tot=sl+cl;
-  E('sDist').textContent=tot>=1?tot.toFixed(2)+' km':Math.round(tot*1000)+' m';
-  if(cSeg)E('segLen').textContent=cl>=1?cl.toFixed(2)+' km':Math.round(cl*1000)+' m';
-}
-
-// ==================== TRACKING FLOW ====================
-function startTracking(){
-  clearForm();
-  openModal('mRouteForm');
+function refreshDist() {
+  const sl = (cRoute.segments||[]).reduce((a,s)=>a+segLen(s),0);
+  const cl = cSeg ? segLen(cSeg) : 0;
+  const tot = sl+cl;
+  E('sDist').textContent = tot>=1 ? tot.toFixed(2)+' km' : Math.round(tot*1000)+' m';
+  if(cSeg) E('segLen').textContent = cl>=1 ? cl.toFixed(2)+' km' : Math.round(cl*1000)+' m';
 }
 
-function confirmStart(){
-  const loai=V('fLoai'),ten=V('fTen').trim(),matLoai=V('fMatLoai');
+// ==================== TRACKING ====================
+function startTracking() { clearForm(); openModal('mRouteForm'); }
+
+function confirmStart() {
+  const loai=V('fLoai'), ten=V('fTen').trim(), matLoai=V('fMatLoai');
   if(!loai){toast('Vui lòng chọn loại đường');return}
   if(!ten){toast('Vui lòng nhập tên tuyến đường');return}
   if(!matLoai){toast('Vui lòng chọn loại mặt đường');return}
-  cRoute={
-    id:'r'+Date.now(),communeId:CU.communeId||CU.username,communeName:CU.name,
-    createdBy:CU.username,createdAt:new Date().toISOString(),
-    stt:nextSTT(),loaiDuong:loai,tenTuyen:ten,
-    diemDau:V('fDau').trim(),diemCuoi:V('fCuoi').trim(),
-    beNen:parseFloat(V('fNen'))||null,beMat:parseFloat(V('fMat'))||null,
-    loaiMatLoai:matLoai,ghiChu:V('fGhi').trim(),chieuDai:null,segments:[]
+
+  cRoute = {
+    id: 'r'+Date.now(), communeId:CU.communeId||CU.username, communeName:CU.name,
+    createdBy:CU.username, createdAt:new Date().toISOString(),
+    stt:nextSTT(), loaiDuong:loai, tenTuyen:ten,
+    diemDau:V('fDau').trim(), diemCuoi:V('fCuoi').trim(),
+    beNen:parseFloat(V('fNen'))||null, beMat:parseFloat(V('fMat'))||null,
+    loaiMatLoai:matLoai, ghiChu:V('fGhi').trim(), chieuDai:null, segments:[]
   };
-  cSeg={points:[],loaiMat:matLoai};
-  if(!startGPS())return;
-  const s=STYLES[loai]||{color:'#9CA3AF',weight:3,dash:null};
-  livePl=L.polyline([],{color:s.color,weight:s.weight,opacity:.9,dashArray:s.dash}).addTo(map);
-  state='tracking';
-  updateUI();
-  closeModal('mRouteForm');
+  cSeg = { points:[], loaiMat:matLoai };
+  if(!startGPS()) return;
+  const s = STYLES[loai]||{color:'#9CA3AF',weight:3,dash:null};
+  livePl = L.polyline([], { color:s.color,weight:s.weight,opacity:.9,dashArray:s.dash }).addTo(map);
+  state='tracking'; updateUI(); closeModal('mRouteForm');
   toast(`📍 Đang định vị: ${ten}`);
 }
 
-function pauseTracking(){
-  if(state!=='tracking')return;
+function pauseTracking() {
+  if(state!=='tracking') return;
   if(!cSeg||cSeg.points.length<2){toast('⚠️ Cần ít nhất 2 điểm GPS để lưu đoạn');return}
-  cRoute.segments.push({...cSeg,points:[...cSeg.points]});
-  const last=cSeg.points[cSeg.points.length-1];
-  L.circleMarker([last.lat,last.lng],{radius:7,color:'#F59E0B',weight:2,fillColor:'#FEF3C7',fillOpacity:1})
+  cRoute.segments.push({...cSeg, points:[...cSeg.points]});
+  const last = cSeg.points[cSeg.points.length-1];
+  L.circleMarker([last.lat,last.lng], { radius:7,color:'#F59E0B',weight:2,fillColor:'#FEF3C7',fillOpacity:1 })
     .addTo(map).bindPopup('⏸ Điểm kết thúc tạm thời — Đoạn '+cRoute.segments.length);
-  livePl=null; // keep existing polyline on map
-  cSeg=null;
-  state='paused';
-  updateUI();
+  livePl=null; cSeg=null; state='paused'; updateUI();
   toast(`⏸ Lưu đoạn ${cRoute.segments.length} thành công`);
 }
 
-function resumeTracking(){
-  if(state!=='paused')return;
-  E('resumeSegN').textContent=cRoute.segments.length+1;
-  openModal('mResume');
-}
+function resumeTracking() { E('resumeN').textContent=cRoute.segments.length+1; openModal('mResume'); }
 
-function confirmResume(){
-  const mat=V('rMatLoai');
-  cSeg={points:[],loaiMat:mat};
-  const r=cRoute,s=STYLES[r.loaiDuong]||{color:'#9CA3AF',weight:3,dash:null};
-  livePl=L.polyline([],{color:s.color,weight:s.weight,opacity:.9,dashArray:s.dash}).addTo(map);
-  state='tracking';
-  updateUI();
-  closeModal('mResume');
+function confirmResume() {
+  const mat = V('rMat');
+  cSeg = { points:[], loaiMat:mat };
+  const s = STYLES[cRoute.loaiDuong]||{color:'#9CA3AF',weight:3,dash:null};
+  livePl = L.polyline([], { color:s.color,weight:s.weight,opacity:.9,dashArray:s.dash }).addTo(map);
+  state='tracking'; updateUI(); closeModal('mResume');
   toast(`▶ Tiếp tục đoạn ${cRoute.segments.length+1} — ${mat}`);
 }
 
-function endTracking(){
-  if(state==='tracking'){
-    if(cSeg&&cSeg.points.length>=2)cRoute.segments.push({...cSeg,points:[...cSeg.points]});
-    else if(cRoute.segments.length===0){toast('⚠️ Chưa đủ dữ liệu GPS');return}
+function endTracking() {
+  if(state==='tracking') {
+    if(cSeg&&cSeg.points.length>=2) cRoute.segments.push({...cSeg,points:[...cSeg.points]});
+    else if(!cRoute.segments.length){toast('⚠️ Chưa đủ dữ liệu GPS');return}
   }
   if(!cRoute.segments.length){toast('⚠️ Không có đủ dữ liệu GPS');return}
-  const tl=totalLen(cRoute);
-  cRoute.chieuDai=tl;
-  const segsInfo=cRoute.segments.map((s,i)=>`• Đoạn ${i+1}: ${s.loaiMat} — ${segLen(s)>=1?segLen(s).toFixed(2)+' km':Math.round(segLen(s)*1000)+' m'} (${s.points.length} điểm)`).join('<br>');
-  E('endSummary').innerHTML=`<strong>${cRoute.tenTuyen}</strong><br><span style="color:var(--muted)">${cRoute.loaiDuong}</span><br><br>📏 <b>Tổng chiều dài GPS:</b> <span style="color:var(--pri);font-weight:800">${tl>=1?tl.toFixed(3)+' km':Math.round(tl*1000)+' m'}</span><br><br>${segsInfo}`;
-  E('eDai').value=tl.toFixed(3);
-  E('eCuoi').value=cRoute.diemCuoi||'';
+  const tl = totalLen(cRoute);
+  const segsInfo = cRoute.segments.map((s,i)=>
+    `• Đoạn ${i+1}: ${s.loaiMat} — ${segLen(s)>=1?segLen(s).toFixed(2)+' km':Math.round(segLen(s)*1000)+' m'} (${s.points.length} điểm)`
+  ).join('<br>');
+  E('endSum').innerHTML = `<strong>${cRoute.tenTuyen}</strong><br><span style="color:var(--muted)">${cRoute.loaiDuong}</span><br><br>📏 <b>Chiều dài GPS:</b> <span style="color:var(--pri);font-weight:800">${tl>=1?tl.toFixed(3)+' km':Math.round(tl*1000)+' m'}</span><br><br>${segsInfo}`;
+  E('eDai').value = tl.toFixed(3);
+  E('eCuoi').value = cRoute.diemCuoi||'';
   openModal('mEnd');
 }
 
-function cancelEnd(){
+function cancelEnd() {
   closeModal('mEnd');
-  // re-open last segment for continuing
-  if(state==='tracking'){
+  if(state==='tracking') {
     cRoute.segments.pop();
-    cSeg={points:[],loaiMat:cRoute.loaiMatLoai};
-    const s=STYLES[cRoute.loaiDuong]||{color:'#9CA3AF',weight:3};
-    livePl=L.polyline([],{color:s.color,weight:s.weight,opacity:.9}).addTo(map);
+    cSeg = { points:[], loaiMat:cRoute.loaiMatLoai };
+    const s = STYLES[cRoute.loaiDuong]||{color:'#9CA3AF',weight:3};
+    livePl = L.polyline([], { color:s.color,weight:s.weight,opacity:.9 }).addTo(map);
   }
 }
 
-function confirmEnd(){
-  const dai=parseFloat(V('eDai'));
+async function confirmEnd() {
+  const dai = parseFloat(V('eDai'));
   if(isNaN(dai)||dai<=0){toast('Vui lòng nhập chiều dài hợp lệ');return}
-  cRoute.chieuDai=dai;
-  cRoute.diemCuoi=V('eCuoi').trim()||cRoute.diemCuoi;
-  const last=cRoute.segments[cRoute.segments.length-1];
-  if(last&&last.points.length){
-    const p=last.points[last.points.length-1];
-    L.marker([p.lat,p.lng],{icon:L.divIcon({html:'🏁',className:'',iconSize:[22,22],iconAnchor:[11,22]})})
-      .addTo(map).bindPopup('🏁 Điểm cuối: '+(cRoute.diemCuoi||cRoute.tenTuyen));
+  cRoute.chieuDai = dai;
+  cRoute.diemCuoi = V('eCuoi').trim()||cRoute.diemCuoi;
+
+  const btn = E('btnSave');
+  btn.disabled=true; btn.textContent='⏳ Đang lưu lên Cloud...';
+
+  try {
+    // Lưu lên Firestore
+    await db.collection('routes').doc(cRoute.id).set(cRoute);
+
+    // Thêm marker điểm cuối
+    const last = cRoute.segments[cRoute.segments.length-1];
+    if(last&&last.points.length) {
+      const p = last.points[last.points.length-1];
+      L.marker([p.lat,p.lng], { icon:L.divIcon({html:'🏁',className:'',iconSize:[22,22],iconAnchor:[11,22]}) })
+        .addTo(map).bindPopup('🏁 Điểm cuối: '+(cRoute.diemCuoi||cRoute.tenTuyen));
+    }
+
+    stopGPS();
+    if(livePl){map.removeLayer(livePl);livePl=null}
+    if(posMk){map.removeLayer(posMk);posMk=null}
+    const saved = cRoute;
+    cRoute=null; cSeg=null; state='idle';
+    btn.disabled=false; btn.textContent='☁️ Lưu lên Cloud';
+    updateUI(); closeModal('mEnd');
+    toast(`✅ Đã lưu: ${saved.tenTuyen} — ${dai.toFixed(2)} km`);
+  } catch(e) {
+    btn.disabled=false; btn.textContent='☁️ Lưu lên Cloud';
+    toast('❌ Lỗi lưu dữ liệu: '+e.message);
   }
-  DB.routes[cRoute.id]=cRoute;
-  save();
-  renderRoute(cRoute);
-  stopGPS();
-  if(livePl){map.removeLayer(livePl);livePl=null}
-  if(posMk){map.removeLayer(posMk);posMk=null}
-  const saved=cRoute;
-  cRoute=null;cSeg=null;state='idle';
-  updateUI();closeModal('mEnd');
-  toast(`✅ Đã lưu: ${saved.tenTuyen} — ${dai.toFixed(2)} km`);
 }
 
-function nextSTT(){return Object.values(DB.routes).filter(r=>r.communeId===(CU.communeId||CU.username)).length+1}
+function nextSTT() {
+  return Object.values(routeCache).filter(r=>r.communeId===(CU.communeId||CU.username)).length + 1;
+}
 
-// ==================== UI UPDATE ====================
-function updateUI(){
+// ==================== UI ====================
+function updateUI() {
   const d=E('sDot'),t=E('sText'),dist=E('sDist'),sb=E('segBar');
-  E('ctrlIdle').style.display='none';
-  E('ctrlTrack').style.display='none';
-  E('ctrlPause').style.display='none';
-  if(state==='idle'){
+  E('ctrlIdle').style.display='none';E('ctrlTrack').style.display='none';E('ctrlPause').style.display='none';
+  if(state==='idle') {
     d.className='s-dot idle';t.textContent='Sẵn sàng khảo sát tuyến đường';dist.textContent='';sb.style.display='none';
     E('ctrlIdle').style.display='block';
-  } else if(state==='tracking'){
+  } else if(state==='tracking') {
     d.className='s-dot tracking';t.textContent=cRoute?cRoute.tenTuyen:'Đang định vị…';
     sb.style.display='flex';
     E('segLabel').textContent=`Đoạn ${(cRoute.segments||[]).length+1}: ${cSeg?.loaiMat||''}`;
-    E('ctrlTrack').style.display='block';
-    refreshDist();
-  } else if(state==='paused'){
+    E('ctrlTrack').style.display='block'; refreshDist();
+  } else if(state==='paused') {
     d.className='s-dot paused';t.textContent=`Tạm dừng — đã lưu ${cRoute.segments.length} đoạn`;
-    sb.style.display='none';E('ctrlPause').style.display='block';
-    refreshDist();
+    sb.style.display='none';E('ctrlPause').style.display='block'; refreshDist();
   }
 }
 
 // ==================== ROUTE LIST ====================
-function visRoutes(){
-  const all=Object.values(DB.routes);
-  return CU.role==='admin'?all:all.filter(r=>r.communeId===(CU.communeId||CU.username)||r.createdBy===CU.username);
+function visRoutes() {
+  const all = Object.values(routeCache);
+  return CU.role==='admin' ? all : all.filter(r=>r.communeId===(CU.communeId||CU.username)||r.createdBy===CU.username);
 }
 
-function renderRoutes(){
-  const rs=visRoutes(),q=V('rlSearch').toLowerCase(),fl=V('rlFilter');
+function renderRoutes() {
+  const rs=visRoutes(), q=V('rlSearch').toLowerCase(), fl=V('rlFilter');
   const f=rs.filter(r=>{
     const m=!q||(r.tenTuyen||'').toLowerCase().includes(q)||(r.diemDau||'').toLowerCase().includes(q)||(r.communeName||'').toLowerCase().includes(q);
     return m&&(!fl||r.loaiDuong===fl);
-  });
-  f.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
-  
+  }).sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+
   const tl=f.reduce((a,r)=>a+(r.chieuDai||0),0);
-  const byType={};f.forEach(r=>byType[r.loaiDuong]=(byType[r.loaiDuong]||0)+1);
   E('rlStats').innerHTML=`
     <div class="stat-box"><div class="stat-val">${f.length}</div><div class="stat-lbl">Tuyến đường</div></div>
     <div class="stat-box"><div class="stat-val">${tl.toFixed(1)}</div><div class="stat-lbl">Tổng km</div></div>
-    <div class="stat-box"><div class="stat-val">${Object.keys(byType).length}</div><div class="stat-lbl">Loại đường</div></div>`;
-  
-  if(!f.length){
-    E('rlContent').innerHTML='<div class="empty"><div class="ei">🛣️</div><p>Chưa có tuyến đường nào được khảo sát</p></div>';
-    return;
-  }
+    <div class="stat-box"><div class="stat-val">${Object.values(f.reduce((a,r)=>{a[r.loaiDuong]=1;return a},{})).length}</div><div class="stat-lbl">Loại đường</div></div>`;
+
+  E('rlLive').innerHTML = `<div class="live-badge"><div class="live-dot"></div>${f.length} tuyến</div>`;
+
+  if(!f.length){E('rlContent').innerHTML='<div class="empty"><div class="ei">🛣️</div><p>Chưa có tuyến đường nào</p></div>';return}
   E('rlContent').innerHTML=f.map(r=>`
     <div class="route-card ${RC[r.loaiDuong]||''}">
       <div class="rc-head">
@@ -886,7 +837,7 @@ function renderRoutes(){
       </div>
       ${r.diemDau||r.diemCuoi?`<div style="font-size:11px;color:var(--muted);margin:4px 0">🅰️ ${r.diemDau||'?'} → 🅱️ ${r.diemCuoi||'?'}</div>`:''}
       ${r.ghiChu?`<div style="font-size:11px;color:var(--muted);font-style:italic">💬 ${r.ghiChu}</div>`:''}
-      <div class="rc-actions" style="margin-top:9px">
+      <div class="rc-actions">
         <button class="btn btn-sm btn-outline" onclick="zoomRoute('${r.id}')">🗺️ Xem</button>
         <button class="btn btn-sm btn-gray" onclick="openEdit('${r.id}')">✏️ Sửa</button>
         <button class="btn btn-sm btn-dan" onclick="delRoute('${r.id}')">🗑️ Xóa</button>
@@ -894,94 +845,85 @@ function renderRoutes(){
     </div>`).join('');
 }
 
-function shortType(t){
-  if(t==='Đường xã')return'Đường xã';
-  if(t==='Đường thôn')return'Đường thôn';
-  if(t==='Đường đô thị')return'Đô thị';
-  return'Ngõ xóm/SX';
+function shortType(t) {
+  if(t==='Đường xã')return'Đường xã';if(t==='Đường thôn')return'Đường thôn';
+  if(t==='Đường đô thị')return'Đô thị';return'Ngõ xóm/SX';
 }
 
-function zoomRoute(id){
+function zoomRoute(id) {
   closeModal('mRouteList');
-  const ls=layers[id];
-  if(ls&&ls.length){
-    const g=L.featureGroup(ls);
-    map.fitBounds(g.getBounds().pad(.35));
-    ls[0].openPopup();
-  }
+  const ls=mapLayers[id];
+  if(ls&&ls.length) { const g=L.featureGroup(ls);map.fitBounds(g.getBounds().pad(.35));ls[0].openPopup(); }
 }
 
-function delRoute(id){
-  const r=DB.routes[id];if(!r)return;
-  if(!confirm(`Xóa tuyến "${r.tenTuyen}"?\n\nThao tác này không thể khôi phục!`))return;
-  delete DB.routes[id];save();
-  removeRoute(id);renderRoutes();
-  toast('🗑️ Đã xóa: '+r.tenTuyen);
+async function delRoute(id) {
+  const r=routeCache[id]; if(!r)return;
+  if(!confirm(`Xóa tuyến "${r.tenTuyen}"?\n\nThao tác này không thể khôi phục!`)) return;
+  try {
+    await db.collection('routes').doc(id).delete();
+    toast('🗑️ Đã xóa: '+r.tenTuyen);
+  } catch(e) { toast('❌ Lỗi xóa: '+e.message); }
 }
 
-function openEdit(id){
-  const r=DB.routes[id];if(!r)return;
-  E('eRid').value=id;
-  E('eeLoai').value=r.loaiDuong||'';E('eeTen').value=r.tenTuyen||'';
-  E('eeDau').value=r.diemDau||'';E('eeCuoi').value=r.diemCuoi||'';
-  E('eeDai').value=r.chieuDai||'';E('eeNen').value=r.beNen||'';
-  E('eeMat').value=r.beMat||'';E('eeMatLoai').value=r.loaiMatLoai||'';
-  E('eeGhi').value=r.ghiChu||'';
-  openModal('mEdit');
+function openEdit(id) {
+  const r=routeCache[id]; if(!r)return;
+  E('eRid').value=id; E('eeLoai').value=r.loaiDuong||''; E('eeTen').value=r.tenTuyen||'';
+  E('eeDau').value=r.diemDau||''; E('eeCuoi').value=r.diemCuoi||'';
+  E('eeDai').value=r.chieuDai||''; E('eeNen').value=r.beNen||'';
+  E('eeMat').value=r.beMat||''; E('eeMatLoai').value=r.loaiMatLoai||'';
+  E('eeGhi').value=r.ghiChu||''; openModal('mEdit');
 }
 
-function saveEdit(){
-  const id=V('eRid'),r=DB.routes[id];if(!r)return;
-  r.loaiDuong=V('eeLoai');r.tenTuyen=V('eeTen').trim();
-  r.diemDau=V('eeDau').trim();r.diemCuoi=V('eeCuoi').trim();
-  r.chieuDai=parseFloat(V('eeDai'))||r.chieuDai;
-  r.beNen=parseFloat(V('eeNen'))||null;r.beMat=parseFloat(V('eeMat'))||null;
-  r.loaiMatLoai=V('eeMatLoai');r.ghiChu=V('eeGhi').trim();
-  save();removeRoute(id);renderRoute(r);renderRoutes();
-  closeModal('mEdit');toast('✅ Đã cập nhật: '+r.tenTuyen);
+async function saveEdit() {
+  const id=V('eRid'); const r=routeCache[id]; if(!r)return;
+  const updated = { ...r,
+    loaiDuong:V('eeLoai'), tenTuyen:V('eeTen').trim(),
+    diemDau:V('eeDau').trim(), diemCuoi:V('eeCuoi').trim(),
+    chieuDai:parseFloat(V('eeDai'))||r.chieuDai,
+    beNen:parseFloat(V('eeNen'))||null, beMat:parseFloat(V('eeMat'))||null,
+    loaiMatLoai:V('eeMatLoai'), ghiChu:V('eeGhi').trim(),
+    updatedAt: new Date().toISOString()
+  };
+  try {
+    await db.collection('routes').doc(id).set(updated);
+    closeModal('mEdit'); toast('✅ Đã cập nhật: '+updated.tenTuyen);
+  } catch(e) { toast('❌ Lỗi: '+e.message); }
 }
 
 // ==================== KML EXPORT ====================
-function exportKML(){
+function exportKML() {
   const rs=visRoutes();
   if(!rs.length){toast('Chưa có tuyến đường nào để xuất');return}
   const dt=new Date().toLocaleDateString('vi-VN');
-  let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n  <name>GTNT Lào Cai — ${dt}</name>\n  <description>Hệ thống giao thông nông thôn tỉnh Lào Cai — Sở GTVT</description>\n`;
-  // Styles
+  let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n  <name>GTNT Lào Cai — ${dt}</name>\n  <description>Phòng Quản lý giao thông — Sở Xây dựng Lào Cai</description>\n`;
   [['sXa','#1565C0',5],['sThon','#2E7D32',3],['sDT','#C62828',6],['sNgo','#E65100',2]].forEach(([id,hex,w])=>{
     const r=hex.slice(1,3),g=hex.slice(3,5),b=hex.slice(5,7);
     kml+=`  <Style id="${id}"><LineStyle><color>FF${b}${g}${r}</color><width>${w}</width></LineStyle><LabelStyle><scale>0.85</scale></LabelStyle></Style>\n`;
   });
-  const smap={'Đường xã':'#sXa','Đường thôn':'#sThon','Đường đô thị':'#sDT','Đường ngõ xóm, đường ra khu sản xuất':'#sNgo'};
+  const sm={'Đường xã':'#sXa','Đường thôn':'#sThon','Đường đô thị':'#sDT','Đường ngõ xóm, đường ra khu sản xuất':'#sNgo'};
   if(CU.role==='admin'){
     const byC={};rs.forEach(r=>{const k=r.communeName||r.communeId;(byC[k]=byC[k]||[]).push(r)});
     Object.entries(byC).forEach(([cn,cr])=>{
-      kml+=`  <Folder><name>${xesc(cn)}</name>\n`;
-      cr.forEach(r=>kml+=r2kml(r,smap));
-      kml+=`  </Folder>\n`;
+      kml+=`  <Folder><name>${xesc(cn)}</name>\n`;cr.forEach(r=>kml+=r2kml(r,sm));kml+=`  </Folder>\n`;
     });
-  } else rs.forEach(r=>kml+=r2kml(r,smap));
+  } else rs.forEach(r=>kml+=r2kml(r,sm));
   kml+=`</Document></kml>`;
   const blob=new Blob([kml],{type:'application/vnd.google-earth.kml+xml'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download=`GTNT_LaoCai_${Date.now()}.kml`;
-  a.click();
-  closeModal('mMenu');
-  toast('✅ Xuất KML thành công! ('+rs.length+' tuyến)');
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`GTNT_LaoCai_${Date.now()}.kml`;a.click();
+  closeModal('mMenu'); toast('✅ Xuất KML thành công! ('+rs.length+' tuyến)');
 }
 
-function r2kml(r,sm){
+function r2kml(r,sm) {
   if(!r.segments||!r.segments.length)return'';
   let out='';const style=sm[r.loaiDuong]||'#sNgo';
   const desc=xesc([`Loại đường: ${r.loaiDuong}`,`Điểm đầu: ${r.diemDau||'N/A'}`,`Điểm cuối: ${r.diemCuoi||'N/A'}`,
-    `Chiều dài: ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}`,`Bề rộng nền: ${r.beNen||'?'}m`,
-    `Bề rộng mặt: ${r.beMat||'?'}m`,`Mặt đường: ${r.loaiMatLoai||'N/A'}`,
-    `Đơn vị: ${r.communeName||r.communeId}`,`Ngày KS: ${(r.createdAt||'').slice(0,10)}`].join('&#10;'));
+    `Chiều dài: ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}`,`Nền: ${r.beNen||'?'}m / Mặt: ${r.beMat||'?'}m`,
+    `Mặt đường: ${r.loaiMatLoai||'N/A'}`,`Đơn vị: ${r.communeName||r.communeId}`,`Ngày KS: ${(r.createdAt||'').slice(0,10)}`].join('&#10;'));
   r.segments.forEach((seg,i)=>{
     if(!seg.points||seg.points.length<2)return;
     const coords=seg.points.map(p=>`${p.lng},${p.lat},0`).join('\n              ');
-    const sl=r.segments.length>1?` (Đoạn ${i+1} — ${seg.loaiMat||r.loaiMatLoai||''})`:' ';
+    const sl=r.segments.length>1?` (Đoạn ${i+1} — ${seg.loaiMat||''})`:' ';
     out+=`    <Placemark>\n      <name>${xesc(r.tenTuyen||'Tuyến '+r.stt)}${xesc(sl)}</name>\n      <description>${desc}</description>\n      <styleUrl>${style}</styleUrl>\n      <LineString><tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode><coordinates>\n              ${coords}\n      </coordinates></LineString>\n    </Placemark>\n`;
   });
   return out;
@@ -989,49 +931,67 @@ function r2kml(r,sm){
 function xesc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 
 // ==================== ADMIN ====================
-function renderUsers(){
+async function renderUsers() {
   const q=V('uSearch').toLowerCase();
-  const us=Object.entries(DB.users).filter(([u,d])=>u!=='admin'&&(!q||u.toLowerCase().includes(q)||(d.name||'').toLowerCase().includes(q)));
-  E('tUsers').textContent=`👥 Tài khoản (${us.length})`;
-  if(!us.length){E('uList').innerHTML='<div class="empty"><div class="ei">👥</div><p>Chưa có tài khoản xã nào</p></div>';return}
-  E('uList').innerHTML=us.map(([u,d])=>{
-    const rc=Object.values(DB.routes).filter(r=>r.communeId===(d.communeId||u)||r.createdBy===u).length;
-    return`<div class="user-row">
-      <div class="ua">🏘️</div>
-      <div class="ui">
-        <div class="ui-name">${d.name||u}</div>
-        <div class="ui-sub">@${u} · ${d.district||''} · ${rc} tuyến</div>
-      </div>
-      <div style="display:flex;gap:5px">
-        <button class="btn btn-sm btn-gray" onclick="resetPwd('${u}')">🔑</button>
-        <button class="btn btn-sm btn-dan" onclick="delUser('${u}')">🗑️</button>
-      </div>
-    </div>`}).join('');
+  try {
+    const snap = await db.collection('users').get();
+    const us=[];
+    snap.forEach(doc=>{
+      const d=doc.data();
+      if(doc.id!=='admin'&&(!q||doc.id.toLowerCase().includes(q)||(d.name||'').toLowerCase().includes(q)))
+        us.push([doc.id,d]);
+    });
+    E('tUsers').textContent=`👥 Tài khoản (${us.length})`;
+    if(!us.length){E('uList').innerHTML='<div class="empty"><div class="ei">👥</div><p>Chưa có tài khoản xã nào</p></div>';return}
+    const routeCounts={};
+    Object.values(routeCache).forEach(r=>{ const k=r.communeId||r.createdBy; routeCounts[k]=(routeCounts[k]||0)+1; });
+    E('uList').innerHTML=us.map(([u,d])=>`
+      <div class="user-row">
+        <div class="ua">🏘️</div>
+        <div class="ui">
+          <div class="ui-name">${d.name||u}</div>
+          <div class="ui-sub">@${u} · ${d.district||''} · ${routeCounts[d.communeId||u]||0} tuyến</div>
+        </div>
+        <div style="display:flex;gap:5px">
+          <button class="btn btn-sm btn-gray" onclick="resetPwd('${u}')">🔑</button>
+          <button class="btn btn-sm btn-dan" onclick="delUser('${u}')">🗑️</button>
+        </div>
+      </div>`).join('');
+  } catch(e) { toast('Lỗi tải danh sách: '+e.message); }
 }
 
-function createUser(){
+async function createUser() {
   const name=V('aName').trim(),u=V('aUser').trim().toLowerCase(),p=V('aPass'),d=V('aDistrict').trim(),c=V('aCode').trim();
   if(!name||!u||!p){toast('Vui lòng điền đầy đủ thông tin');return}
   if(p.length<6){toast('Mật khẩu cần ít nhất 6 ký tự');return}
-  if(DB.users[u]){toast('Tên đăng nhập đã tồn tại');return}
-  DB.users[u]={password:p,role:'commune',name,district:d,code:c,communeId:c||u};
-  save();['aName','aUser','aPass','aDistrict','aCode'].forEach(id=>E(id).value='');
-  switchTab('users');renderUsers();
-  toast(`✅ Tạo tài khoản thành công: @${u}`);
+  const btn=document.querySelector('#tabAdd .btn');btn.disabled=true;btn.textContent='⏳ Đang tạo...';
+  try {
+    const existing=await db.collection('users').doc(u).get();
+    if(existing.exists){toast('Tên đăng nhập đã tồn tại');btn.disabled=false;btn.textContent='➕ Tạo tài khoản';return}
+    await db.collection('users').doc(u).set({
+      name,district:d,code:c,communeId:c||u,password:p,role:'commune',
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    ['aName','aUser','aPass','aDistrict','aCode'].forEach(id=>E(id).value='');
+    switchTab('users');btn.disabled=false;btn.textContent='➕ Tạo tài khoản';
+    toast(`✅ Tạo tài khoản: @${u}`);
+  } catch(e){toast('❌ Lỗi: '+e.message);btn.disabled=false;btn.textContent='➕ Tạo tài khoản';}
 }
 
-function resetPwd(u){
+async function resetPwd(u) {
   const p=prompt(`Mật khẩu mới cho @${u}:`);
   if(!p)return;if(p.length<6){toast('Cần ít nhất 6 ký tự');return}
-  DB.users[u].password=p;save();toast(`✅ Đã đổi mật khẩu @${u}`);
+  try{await db.collection('users').doc(u).update({password:p});toast(`✅ Đã đổi mật khẩu @${u}`);}
+  catch(e){toast('❌ Lỗi: '+e.message);}
 }
 
-function delUser(u){
-  if(!confirm(`Xóa tài khoản @${u}?\nDữ liệu tuyến đường vẫn giữ lại.`))return;
-  delete DB.users[u];save();renderUsers();toast(`🗑️ Đã xóa @${u}`);
+async function delUser(u) {
+  if(!confirm(`Xóa tài khoản @${u}?\nDữ liệu tuyến đường vẫn giữ lại.`)) return;
+  try{await db.collection('users').doc(u).delete();renderUsers();toast(`🗑️ Đã xóa @${u}`);}
+  catch(e){toast('❌ Lỗi: '+e.message);}
 }
 
-function switchTab(t){
+function switchTab(t) {
   E('tabUsers').style.display=t==='users'?'block':'none';
   E('tabAdd').style.display=t==='add'?'block':'none';
   E('tUsers').classList.toggle('active',t==='users');
@@ -1039,52 +999,29 @@ function switchTab(t){
   if(t==='users')renderUsers();
 }
 
-// ==================== MODAL HELPERS ====================
+// ==================== MODALS ====================
 function openModal(id){E(id).classList.add('active')}
 function closeModal(id){E(id).classList.remove('active')}
 function closeAll(){document.querySelectorAll('.modal-bg').forEach(m=>m.classList.remove('active'))}
 document.querySelectorAll('.modal-bg').forEach(m=>{
   m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('active')});
 });
-function openMenu(){
+
+function openMenu() {
   E('mName').textContent=CU.name;
-  E('mRole').textContent=CU.role==='admin'?'👑 Quản trị viên — Sở GTVT':'🏘️ Cán bộ xã/phường';
+  E('mRole').textContent=CU.role==='admin'?'👑 Quản trị viên — Sở Xây dựng':'🏘️ Cán bộ xã/phường';
   E('mAdminRow').style.display=CU.role==='admin'?'flex':'none';
+  const sc=document.getElementById('syncLbl').textContent;
+  E('mSyncBadge').innerHTML=`<div class="sync-badge" style="display:inline-flex;align-items:center;gap:4px;background:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:700">🔄 ${sc}</div>`;
   openModal('mMenu');
 }
-function openRouteList(){
-  E('rlSearch').value='';E('rlFilter').value='';
-  renderRoutes();openModal('mRouteList');
-}
+function openRouteList(){E('rlSearch').value='';E('rlFilter').value='';renderRoutes();openModal('mRouteList')}
 function openAdmin(){renderUsers();openModal('mAdmin')}
-
-// ==================== SCREEN ====================
-function showScreen(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  E(id).classList.add('active');
-}
-
-// ==================== INIT ====================
-function initApp(){
-  showScreen('scMap');
-  E('tbTitle').textContent=CU.role==='admin'?'Quản trị — GTNT Lào Cai':CU.name;
-  E('tbSub').textContent=CU.role==='admin'?'Quản trị viên Sở GTVT':(CU.district||'Cán bộ xã/phường');
-  setTimeout(()=>{initMap();renderAllRoutes()},150);
-  updateUI();
-}
-
-// ==================== UTILS ====================
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));E(id).classList.add('active')}
 function E(id){return document.getElementById(id)}
 function V(id){return(E(id)||{}).value||''}
 function clearForm(){['fLoai','fTen','fDau','fCuoi','fNen','fMat','fMatLoai','fGhi'].forEach(id=>{if(E(id))E(id).value=''})}
-function toast(msg){
-  const t=E('toast');t.textContent=msg;t.classList.add('show');
-  clearTimeout(t._tid);t._tid=setTimeout(()=>t.classList.remove('show'),3200);
-}
-
-// PWA install helper
-let deferredPWA=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPWA=e});
+function toast(msg){const t=E('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),3200)}
 </script>
 </body>
 </html>
