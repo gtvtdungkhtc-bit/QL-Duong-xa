@@ -194,6 +194,32 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
 </div>
 
+
+<!-- GPS PERMISSION SCREEN -->
+<div id="scGPS" class="screen" style="background:linear-gradient(160deg,#1B5E20,#2E7D32 50%,#1565C0);justify-content:center;align-items:center;padding:24px">
+  <div style="background:#fff;border-radius:24px;padding:36px 28px;width:min(400px,92vw);text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.35)">
+    <div style="font-size:64px;margin-bottom:16px">📍</div>
+    <h2 style="font-size:20px;font-weight:800;color:#1565C0;margin-bottom:10px">Cấp quyền GPS</h2>
+    <p style="font-size:14px;color:#64748B;line-height:1.6;margin-bottom:24px">
+      App cần truy cập vị trí của bạn để định vị tuyến đường.<br>
+      Bấm nút bên dưới rồi chọn <b>"Cho phép"</b> khi iPhone hỏi.
+    </p>
+    <button class="btn btn-suc btn-full" style="font-size:17px;padding:18px;border-radius:14px;margin-bottom:12px"
+      onclick="requestGPSPermission()">
+      🛰️ Cho phép truy cập vị trí
+    </button>
+    <button class="btn btn-gray btn-full" style="font-size:13px;padding:12px"
+      onclick="skipGPS()">
+      Bỏ qua — dùng không có GPS
+    </button>
+    <div style="margin-top:16px;font-size:11px;color:#94a3b8;line-height:1.7">
+      Nếu đã bấm nhưng không thấy hỏi:<br>
+      <b>Cài đặt → Safari → Vị trí → Cho phép</b><br>
+      rồi quay lại bấm lại nút trên
+    </div>
+  </div>
+</div>
+
 <!-- MAP SCREEN -->
 <div id="scMap" class="screen">
   <div id="map"></div>
@@ -283,7 +309,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     <div class="menu-row" id="mAdminRow" onclick="closeModal('mMenu');openAdmin()" style="display:none"><span class="mi">⚙️</span><div><div class="mt">Quản lý tài khoản xã/phường</div><div class="ms">Tạo và quản lý 99 tài khoản</div></div></div>
     <div class="menu-row" onclick="exportKML()"><span class="mi">📥</span><div><div class="mt">Xuất file KML (Google Earth)</div><div class="ms">Tải file về mở trên Google Earth/Maps</div></div></div>
     <div class="divider"></div>
-    <button class="btn btn-dan btn-full" onclick="doLogout()">🚪 Đăng xuất</button>
+    <div class="menu-row" onclick="changeMyPassword()">
+      <span class="mi">🔑</span>
+      <div><div class="mt">Đổi mật khẩu của tôi</div><div class="ms">Thay đổi mật khẩu đăng nhập</div></div>
+    </div>
+    <button class="btn btn-dan btn-full" style="margin-top:8px" onclick="doLogout()">🚪 Đăng xuất</button>
   </div>
 </div>
 
@@ -524,13 +554,75 @@ async function doLogin() {
       btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
       return;
     }
-    CU = { username: u, ...userDoc.data() };
+    CU = { username: u, ...userDoc.data(), password: userDoc.data().password };
     btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
-    await initApp();
+    // Hiện màn hình xin quyền GPS TRƯỚC — iOS yêu cầu gọi GPS ngay từ user gesture
+    showScreen('scGPS');
   } catch(e) {
     toast('⚠️ Lỗi kết nối: ' + e.message);
     btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
   }
+}
+
+// ===== GPS PERMISSION FLOW =====
+// Hàm này được gọi TRỰC TIẾP từ onclick - đúng quy tắc iOS
+function requestGPSPermission() {
+  if(!navigator.geolocation) {
+    alert('Thiết bị không hỗ trợ GPS. Tiếp tục sử dụng không có GPS.');
+    initApp();
+    return;
+  }
+  // GỌI GPS NGAY - không có async, không có setTimeout ở giữa
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      // Thành công! Lưu vị trí, chuyển sang bản đồ
+      gpsReady = true;
+      lastPos = pos;
+      initApp().then(() => {
+        // Cập nhật UI sau khi map load
+        updateGPS(pos, null);
+        if(map) map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+        startBgWatch();
+        toast('✅ GPS đã kết nối!');
+      });
+    },
+    err => {
+      // Từ chối hoặc lỗi - vẫn vào app nhưng GPS không có
+      console.log('GPS permission result:', err.code, err.message);
+      initApp().then(() => {
+        updateGPS(null, err);
+        if(err.code === 1) {
+          toast('⛔ Chưa cấp quyền GPS. Vào Cài đặt → Safari → Vị trí → Cho phép');
+        }
+      });
+    },
+    { enableHighAccuracy: true, timeout: Infinity, maximumAge: 0 }
+  );
+}
+
+let lastPos = null;
+
+function skipGPS() {
+  initApp();
+  E('gpsDot').className = 'gps-dot gps-err';
+  E('gpsLbl').textContent = '⛔ Chưa cấp quyền — Bấm đây';
+}
+
+async function changeMyPassword() {
+  const oldPwd = prompt('Nhập mật khẩu HIỆN TẠI:');
+  if(!oldPwd) return;
+  if(oldPwd !== CU.password) { toast('❌ Mật khẩu hiện tại không đúng!'); return; }
+  const newPwd = prompt('Nhập mật khẩu MỚI (tối thiểu 6 ký tự):');
+  if(!newPwd) return;
+  if(newPwd.length < 6) { toast('❌ Mật khẩu cần ít nhất 6 ký tự'); return; }
+  const confirm2 = prompt('Nhập lại mật khẩu mới để xác nhận:');
+  if(newPwd !== confirm2) { toast('❌ Mật khẩu nhập lại không khớp!'); return; }
+  try {
+    await db.collection('users').doc(CU.username).update({ password: newPwd });
+    CU.password = newPwd;
+    closeModal('mMenu');
+    toast('✅ Đổi mật khẩu thành công!');
+  } catch(e) { toast('❌ Lỗi: ' + e.message); }
 }
 
 function doLogout() {
@@ -555,12 +647,16 @@ async function initApp() {
   E('tbTitle').textContent = CU.role === 'admin' ? 'Quản trị — GTNT Lào Cai' : CU.name;
   E('tbSub').textContent = CU.role === 'admin' ? 'Quản trị viên — Sở Xây dựng Lào Cai' : (CU.district || 'Cán bộ xã/phường');
 
-  // Init map và GPS ngay lập tức
+  // Init map
   setTimeout(() => {
     initMap();
     setupRouteListener();
-    // Tự động bật GPS ngay khi vào bản đồ - iOS cho phép vì đây là sau user action (login)
-    setTimeout(initBgGPS, 300);
+    // GPS đã được xin quyền trước ở màn hình scGPS - không cần xin lại
+    if(lastPos) {
+      updateGPS(lastPos, null);
+      if(map) map.setView([lastPos.coords.latitude, lastPos.coords.longitude], 14);
+    }
+    if(gpsReady && bgWatchId === null) startBgWatch();
   }, 150);
   updateUI();
   setSyncStatus('syncing', 'Đang tải dữ liệu...');
