@@ -238,16 +238,22 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
         </button>
       </div>
       <button class="btn btn-suc btn-full btn-lg" onclick="startTracking()">📍 Bước 2: Bắt đầu định vị tuyến</button>
-      <div id="gpsHelp" style="display:none;margin-top:10px;background:#FEF2F2;border-radius:10px;padding:12px;font-size:12px;color:#B71C1C">
-        <b>⛔ Chưa cấp quyền GPS — Làm theo hướng dẫn:</b>
-        <div style="margin-top:8px;line-height:1.9;background:#fff;border-radius:8px;padding:10px">
-          <b>📱 iPhone/iPad:</b><br>
-          Cài đặt → Quyền riêng tư → Dịch vụ vị trí → Safari → <b>Khi dùng app</b><br><br>
-          <b>🤖 Android/Chrome:</b><br>
-          Bấm icon 🔒 trên thanh địa chỉ → Quyền → Vị trí → <b>Cho phép</b><br><br>
-          Sau đó quay lại app và bấm <b>"Bật GPS"</b> ở trên
+      <div id="gpsHelp" style="display:none;margin-top:10px;background:#FEF2F2;border-radius:10px;padding:12px;font-size:12px;color:#7f1d1d">
+        <b style="font-size:13px">⛔ Chưa cấp quyền GPS</b>
+        <div style="margin-top:10px;background:#fff;border-radius:8px;padding:12px;line-height:2;color:#1a1a2e">
+          <b>📱 iPhone — làm theo 4 bước:</b><br>
+          1️⃣ Thoát app, vào <b>Cài đặt</b> (Settings)<br>
+          2️⃣ Kéo xuống tìm <b>Safari</b> → bấm vào<br>
+          3️⃣ Tìm mục <b>Vị trí</b> (Location) → chọn <b>"Khi đang dùng"</b><br>
+          4️⃣ Quay lại app → bấm <b>"Bật GPS"</b> bên trên<br><br>
+          <b>🤖 Android — làm theo 3 bước:</b><br>
+          1️⃣ Bấm icon <b>🔒</b> trên thanh địa chỉ Chrome<br>
+          2️⃣ Bấm <b>Quyền</b> → <b>Vị trí</b> → <b>Cho phép</b><br>
+          3️⃣ Tải lại trang → bấm <b>"Bật GPS"</b> bên trên
         </div>
-        <button class="btn btn-pri btn-full" style="margin-top:8px" onclick="initBgGPS()">🔄 Đã cấp quyền — Thử lại</button>
+        <button class="btn btn-pri btn-full" style="margin-top:10px;font-size:13px" onclick="retryGPS()">
+          🔄 Đã cấp quyền rồi — Thử lại GPS
+        </button>
       </div>
     </div>
     <div id="ctrlTrack" style="display:none">
@@ -640,90 +646,120 @@ function removeMapLayer(id) {
 }
 
 // ==================== GPS ====================
+// Fix cho iOS: KHÔNG dùng timeout ngắn, KHÔNG auto-init, phải từ user tap
 let bgWatchId = null;
-
-function gpsErrMsg(code) {
-  if(code === 1) return '⛔ Chưa cấp quyền — Bấm để sửa';
-  if(code === 2) return '📡 Mất tín hiệu GPS';
-  if(code === 3) return '⏱ Chờ tín hiệu… Bấm thử lại';
-  return '⚠️ Lỗi GPS — Bấm thử lại';
-}
+let gpsReady = false; // đã có tín hiệu GPS chưa
 
 function updateGPS(pos, err) {
   const dot = E('gpsDot'), lbl = E('gpsLbl');
   if(err) {
+    gpsReady = false;
     dot.className = 'gps-dot gps-err';
-    lbl.textContent = gpsErrMsg(err.code);
-    if(err.code === 1) showGPSHelp();
+    // Hiện mã lỗi cụ thể để debug
+    const msg = err.code===1 ? '⛔ Chưa cấp quyền — Bấm đây'
+               :err.code===2 ? '📡 Mất tín hiệu GPS'
+               :err.code===3 ? '⏱ Đang chờ GPS… Bấm đây'
+               :'⚠️ Lỗi GPS ('+err.code+')';
+    lbl.textContent = msg;
+    if(err.code===1) showGPSHelp();
     return;
   }
-  if(!pos) { dot.className = 'gps-dot gps-warn active'; lbl.textContent = 'Đang lấy vị trí…'; return; }
+  if(!pos) {
+    dot.className = 'gps-dot gps-warn active';
+    lbl.textContent = 'Đang bắt tín hiệu…';
+    return;
+  }
+  gpsReady = true;
   const a = Math.round(pos.coords.accuracy);
-  dot.className = (a<20?'gps-dot gps-ok':a<60?'gps-dot gps-warn':'gps-dot gps-err') + ' active';
-  lbl.textContent = a<20 ? `✓ GPS ±${a}m` : a<60 ? `GPS ±${a}m` : `GPS yếu ±${a}m`;
-  const hp = E('gpsHelp'); if(hp) hp.style.display='none';
-  const ga = E('gpsActivate'); if(ga) ga.style.display='none';
+  dot.className = (a<30?'gps-dot gps-ok':a<100?'gps-dot gps-warn':'gps-dot gps-warn') + ' active';
+  lbl.textContent = `✓ GPS ±${a}m`;
+  // Ẩn hướng dẫn khi GPS đã OK
+  const hp=E('gpsHelp'); if(hp) hp.style.display='none';
+  const ga=E('gpsActivate'); if(ga) ga.style.display='none';
 }
 
 function showGPSHelp() {
-  const hp = E('gpsHelp');
+  const hp=E('gpsHelp');
   if(hp && state==='idle') hp.style.display='block';
 }
 
-// QUAN TRỌNG: iOS chỉ cho xin GPS khi người dùng CHỦ ĐỘNG BẤM
-// Vì vậy hàm này phải gọi từ onclick của nút
+// Hàm này PHẢI được gọi từ sự kiện bấm của người dùng (iOS bắt buộc)
 function initBgGPS() {
   if(!navigator.geolocation) {
-    E('gpsDot').className='gps-dot gps-err'; E('gpsLbl').textContent='❌ Không có GPS'; return;
+    E('gpsDot').className='gps-dot gps-err';
+    E('gpsLbl').textContent='❌ Không hỗ trợ GPS'; return;
   }
-  E('gpsDot').className='gps-dot gps-warn active'; E('gpsLbl').textContent='Đang lấy vị trí…';
+  E('gpsDot').className='gps-dot gps-warn active';
+  E('gpsLbl').textContent='Đang kết nối GPS…';
+
+  // BƯỚC 1: Thử lấy vị trí NHANH trước (WiFi/4G, không cần GPS chip)
+  // enableHighAccuracy:false → nhanh hơn, ít lỗi hơn trên iOS
   navigator.geolocation.getCurrentPosition(
     pos => {
+      // Thành công với low accuracy → cập nhật bản đồ
       updateGPS(pos, null);
       if(map) map.setView([pos.coords.latitude, pos.coords.longitude], 15);
+      toast('📍 Đã lấy vị trí! GPS đang cải thiện độ chính xác…');
+      // BƯỚC 2: Bắt đầu watch với high accuracy (GPS chip thật)
       startBgWatch();
-      toast('✅ GPS đã kết nối thành công!');
     },
     err => {
-      updateGPS(null, err);
-      if(err.code===1) toast('⛔ Chưa cấp quyền! Xem hướng dẫn bên dưới.');
-      else if(err.code===3) toast('⏱ Chưa bắt được tín hiệu. Ra ngoài trời rồi bấm lại.');
+      // Low accuracy thất bại → thử high accuracy
+      if(err.code === 1) {
+        updateGPS(null, err);
+        toast('⛔ Chưa cấp quyền GPS. Xem hướng dẫn bên dưới!');
+        showGPSHelp();
+      } else {
+        // Lỗi 2 hoặc 3 → thử ngay với watch (không timeout)
+        E('gpsLbl').textContent = 'Đang tìm tín hiệu…';
+        startBgWatch();
+        toast('⏱ Đang tìm tín hiệu GPS… Ra ngoài trời để bắt nhanh hơn');
+      }
     },
-    { enableHighAccuracy:true, timeout:25000, maximumAge:0 }
+    { enableHighAccuracy:false, timeout:8000, maximumAge:60000 }
   );
 }
 
 function startBgWatch() {
   if(bgWatchId!==null) return;
+  // iOS FIX: timeout:Infinity = không bao giờ báo lỗi timeout, chờ đến khi có
   bgWatchId = navigator.geolocation.watchPosition(
     pos => {
       updateGPS(pos, null);
-      if(state!=='tracking' && map && pos) {
-        const ll=[pos.coords.latitude,pos.coords.longitude];
+      if(state!=='tracking' && map) {
+        const ll=[pos.coords.latitude, pos.coords.longitude];
         if(!posMk) posMk=L.circleMarker(ll,{radius:8,color:'#fff',weight:3,fillColor:'#1565C0',fillOpacity:1}).addTo(map);
         else posMk.setLatLng(ll);
+        map.setView(ll, map.getZoom());
       }
     },
-    err => updateGPS(null,err),
-    { enableHighAccuracy:true, maximumAge:3000, timeout:30000 }
+    err => { if(err.code!==3) updateGPS(null,err); }, // bỏ qua lỗi timeout tạm thời
+    { enableHighAccuracy:true, maximumAge:2000, timeout:Infinity }
   );
 }
 
 function retryGPS() {
   if(bgWatchId!==null){navigator.geolocation.clearWatch(bgWatchId);bgWatchId=null;}
+  if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}
+  gpsReady=false;
   initBgGPS();
 }
 
 function startGPS() {
   if(!navigator.geolocation){toast('❌ Thiết bị không hỗ trợ GPS');return false;}
+  // Nếu bgWatch đang chạy và đã có vị trí → dùng lại, chỉ thêm onPos callback
+  // iOS FIX: timeout:Infinity để không bao giờ timeout
   watchId = navigator.geolocation.watchPosition(
     onPos,
     err => {
-      updateGPS(null,err);
-      if(err.code===1){toast('⛔ Chưa cấp quyền GPS! Xem hướng dẫn bên dưới.');showGPSHelp();}
-      else if(err.code===3) toast('⏱ Chưa bắt tín hiệu GPS. Đứng yên ngoài trời và chờ.');
+      if(err.code===1){
+        updateGPS(null,err);
+        toast('⛔ Chưa cấp quyền GPS! Xem hướng dẫn bên dưới.');
+        showGPSHelp();
+      }
+      // Bỏ qua lỗi timeout (code 3) - iOS hay bị nhưng vẫn cho data
     },
-    { enableHighAccuracy:true, maximumAge:0, timeout:30000 }
+    { enableHighAccuracy:true, maximumAge:2000, timeout:Infinity }
   );
   return true;
 }
@@ -731,6 +767,7 @@ function startGPS() {
 function stopGPS() {
   if(watchId!==null){navigator.geolocation.clearWatch(watchId);watchId=null;}
 }
+
 
 function onPos(pos) {
   updateGPS(pos, null);
@@ -784,12 +821,8 @@ function confirmStart() {
   };
   cSeg = { points:[], loaiMat:matLoai };
 
-  // Kiểm tra GPS có sẵn sàng chưa
-  const gpsDot = E('gpsDot');
-  if(gpsDot.className.includes('gps-err')) {
-    if(!confirm('⚠️ GPS chưa sẵn sàng!\n\nBạn có muốn tiếp tục không?\n(Nên đợi GPS ổn định trước khi bắt đầu định vị)')) return;
-  }
-
+  // Nếu chưa bật GPS nền → bật ngay (iOS cần user gesture)
+  if(bgWatchId===null) startBgWatch();
   if(!startGPS()) return;
   const s = STYLES[loai]||{color:'#9CA3AF',weight:3,dash:null};
   livePl = L.polyline([], { color:s.color,weight:s.weight,opacity:.9,dashArray:s.dash }).addTo(map);
