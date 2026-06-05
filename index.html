@@ -229,7 +229,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
   </div>
   <div class="gps-indicator" id="gpsBox" onclick="retryGPS()" style="cursor:pointer" title="Bấm để thử lại GPS">
     <div class="gps-dot gps-warn" id="gpsDot"></div>
-    <span id="gpsLbl">Đang lấy GPS…</span>
+    <span id="gpsLbl">Bấm để bật GPS</span>
   </div>
   <div class="sync-status" id="syncBox">
     <div class="sync-dot dot-syncing" id="syncDot"></div>
@@ -253,23 +253,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     </div>
     <div id="ctrlIdle">
       <button class="btn btn-suc btn-full btn-lg" onclick="startTracking()">📍 Bắt đầu định vị tuyến mới</button>
-      <div id="gpsHelp" style="display:none;margin-top:10px;background:#FEF2F2;border-radius:10px;padding:12px;font-size:12px;color:#7f1d1d">
-        <b style="font-size:13px">⛔ Chưa cấp quyền GPS</b>
-        <div style="margin-top:10px;background:#fff;border-radius:8px;padding:12px;line-height:2;color:#1a1a2e">
-          <b>📱 iPhone — làm theo 4 bước:</b><br>
-          1️⃣ Thoát app, vào <b>Cài đặt</b> (Settings)<br>
-          2️⃣ Kéo xuống tìm <b>Safari</b> → bấm vào<br>
-          3️⃣ Tìm mục <b>Vị trí</b> (Location) → chọn <b>"Khi đang dùng"</b><br>
-          4️⃣ Quay lại app → bấm <b>"Bật GPS"</b> bên trên<br><br>
-          <b>🤖 Android — làm theo 3 bước:</b><br>
-          1️⃣ Bấm icon <b>🔒</b> trên thanh địa chỉ Chrome<br>
-          2️⃣ Bấm <b>Quyền</b> → <b>Vị trí</b> → <b>Cho phép</b><br>
-          3️⃣ Tải lại trang → bấm <b>"Bật GPS"</b> bên trên
-        </div>
-        <button class="btn btn-pri btn-full" style="margin-top:10px;font-size:13px" onclick="retryGPS()">
-          🔄 Đã cấp quyền rồi — Thử lại GPS
-        </button>
-      </div>
+
     </div>
     <div id="ctrlTrack" style="display:none">
       <div class="ctrl-grid">
@@ -406,7 +390,11 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
       <div class="form-group"><label>Huyện/Thành phố</label><input type="text" id="aDistrict" placeholder="Ví dụ: Huyện Bảo Thắng"></div>
       <div class="form-group"><label>Mã xã</label><input type="text" id="aCode" placeholder="Ví dụ: XBT001"></div>
       <div class="form-row">
-        <div class="form-group"><label>Tên đăng nhập *</label><input type="text" id="aUser" placeholder="xabaothang"></div>
+        <div class="form-group">
+          <label>Tên đăng nhập * <span style="color:#16a34a;font-weight:600">(chữ thường, không dấu)</span></label>
+          <input type="text" id="aUser" placeholder="vd: xabaothang" 
+            oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+        </div>
         <div class="form-group"><label>Mật khẩu *</label><input type="password" id="aPass" placeholder="Tối thiểu 6 ký tự"></div>
       </div>
       <button class="btn btn-pri btn-full" onclick="createUser()">➕ Tạo tài khoản</button>
@@ -534,7 +522,7 @@ function setLoadStatus(msg) {
 
 // ==================== AUTH ====================
 async function doLogin() {
-  const u = V('inpUser').trim(), p = V('inpPass');
+  const u = V('inpUser').trim().toLowerCase(), p = V('inpPass').trim();
   if(!u || !p) { toast('Vui lòng nhập đầy đủ thông tin'); return; }
 
   const btn = document.querySelector('#scLogin .btn');
@@ -542,8 +530,13 @@ async function doLogin() {
 
   try {
     const userDoc = await db.collection('users').doc(u).get();
-    if (!userDoc.exists || userDoc.data().password !== p) {
-      toast('❌ Sai tên đăng nhập hoặc mật khẩu');
+    if (!userDoc.exists) {
+      toast('❌ Không tìm thấy tài khoản "' + u + '"');
+      btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
+      return;
+    }
+    if (userDoc.data().password !== p) {
+      toast('❌ Sai mật khẩu! Vui lòng kiểm tra lại.');
       btn.disabled = false; btn.textContent = '🔐 Đăng nhập';
       return;
     }
@@ -600,8 +593,7 @@ async function initApp() {
   setTimeout(() => {
     initMap();
     setupRouteListener();
-    // Thử lấy vị trí nền (không cần thành công)
-    setTimeout(initBgGPS, 1000);
+    // KHÔNG tự động gọi GPS - iOS sẽ chặn nếu không có user gesture
   }, 150);
   updateUI();
   setSyncStatus('syncing', 'Đang tải dữ liệu...');
@@ -653,7 +645,7 @@ function initMap() {
   L.control.zoom({position:'bottomright'}).addTo(map);
   // iOS yêu cầu người dùng chủ động bấm để xin GPS
   // Hiện nút mời bấm thay vì tự động xin
-  showGPSPrompt();
+
 }
 
 function renderRoute(r) {
@@ -1093,7 +1085,7 @@ async function renderUsers() {
 }
 
 async function createUser() {
-  const name=V('aName').trim(),u=V('aUser').trim().toLowerCase(),p=V('aPass'),d=V('aDistrict').trim(),c=V('aCode').trim();
+  const name=V('aName').trim(),u=V('aUser').trim().toLowerCase(),p=V('aPass').trim(),d=V('aDistrict').trim(),c=V('aCode').trim();
   if(!name||!u||!p){toast('Vui lòng điền đầy đủ thông tin');return}
   if(p.length<6){toast('Mật khẩu cần ít nhất 6 ký tự');return}
   const btn=document.querySelector('#tabAdd .btn');btn.disabled=true;btn.textContent='⏳ Đang tạo...';
@@ -1111,7 +1103,7 @@ async function createUser() {
 }
 
 async function resetPwd(u) {
-  const p=prompt(`Mật khẩu mới cho @${u}:`);
+  const p=(prompt(`Mật khẩu mới cho @${u}:`)||'').trim();
   if(!p)return;if(p.length<6){toast('Cần ít nhất 6 ký tự');return}
   try{await db.collection('users').doc(u).update({password:p});toast(`✅ Đã đổi mật khẩu @${u}`);}
   catch(e){toast('❌ Lỗi: '+e.message);}
