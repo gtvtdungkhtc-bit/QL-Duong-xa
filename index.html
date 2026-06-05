@@ -241,6 +241,14 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     <div class="legend-item"><div class="legend-line" style="width:26px;background:#2E7D32;height:3px"></div><span>Đường thôn</span></div>
     <div class="legend-item"><div class="legend-line" style="width:26px;background:#C62828;height:6px"></div><span>Đường đô thị</span></div>
     <div class="legend-item"><div class="legend-line" style="width:26px;background:#E65100;height:2px;border-top:2px dashed #E65100"></div><span>Ngõ xóm / SX</span></div>
+    <div style="border-top:1px solid #E2E8F0;margin:6px 0 4px"></div>
+    <div class="legend-item">
+      <div style="width:26px;position:relative;height:10px">
+        <div style="position:absolute;top:2px;width:26px;height:2px;background:#1565C0;border-top:3px dashed #1565C0;opacity:0.85"></div>
+        <div style="position:absolute;top:7px;width:26px;height:2px;background:#2E7D32;border-top:3px dashed #2E7D32;opacity:0.85"></div>
+      </div>
+      <span style="font-size:10px;color:#7B1FA2">🔀 Đoạn đi chung</span>
+    </div>
   </div>
   <div class="map-bottom">
     <div class="track-status">
@@ -284,7 +292,7 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
     </div>
     <div class="menu-row" onclick="closeModal('mMenu');openRouteList()"><span class="mi">📋</span><div><div class="mt">Danh sách tuyến đã khảo sát</div><div class="ms">Xem, sửa, xóa các tuyến đường</div></div></div>
     <div class="menu-row" id="mAdminRow" onclick="closeModal('mMenu');openAdmin()" style="display:none"><span class="mi">⚙️</span><div><div class="mt">Quản lý tài khoản xã/phường</div><div class="ms">Tạo và quản lý 99 tài khoản</div></div></div>
-    <div class="menu-row" onclick="exportKML()"><span class="mi">📥</span><div><div class="mt">Xuất file KML (Google Earth)</div><div class="ms">Tải file về mở trên Google Earth/Maps</div></div></div>
+    <div class="menu-row" onclick="exportKML()"><span class="mi">📥</span><div><div class="mt">Xuất file KMZ (Google Earth)</div><div class="ms">Tải file .kmz về mở trên Google Earth/Maps</div></div></div>
     <div class="divider"></div>
     <div class="menu-row" onclick="changeMyPassword()">
       <span class="mi">🔑</span>
@@ -324,14 +332,57 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 <div class="modal-bg" id="mResume">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">🔄 Đoạn đường tiếp theo</div>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Chọn loại mặt đường cho đoạn <span id="resumeN">2</span></p>
-    <div class="form-group"><label>Loại mặt đường *</label>
+    <div class="modal-title">🔄 Đoạn đường tiếp theo — Đoạn <span id="resumeN">2</span></div>
+    
+    <!-- Loại đoạn: độc lập hay đi chung -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+      <div id="btnDocLap" onclick="selectSegType('doc_lap')"
+        style="border:2px solid #1565C0;border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:#E3F2FD">
+        <div style="font-size:20px;margin-bottom:4px">🛣️</div>
+        <div style="font-size:12px;font-weight:700;color:#1565C0">Đoạn độc lập</div>
+        <div style="font-size:11px;color:#64748B">Chỉ thuộc tuyến này</div>
+      </div>
+      <div id="btnDiChung" onclick="selectSegType('di_chung')"
+        style="border:2px solid var(--bor);border-radius:10px;padding:12px;text-align:center;cursor:pointer;background:var(--bg)">
+        <div style="font-size:20px;margin-bottom:4px">🔀</div>
+        <div style="font-size:12px;font-weight:700;color:#7B1FA2">Đoạn đi chung</div>
+        <div style="font-size:11px;color:#64748B">Dùng chung tuyến khác</div>
+      </div>
+    </div>
+    
+    <!-- Tên tuyến đi chung (chỉ hiện khi chọn đi chung) -->
+    <div id="sharedInfo" style="display:none;background:#F3E5F5;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#4A148C">
+      <b>📝 Ghi chú đoạn đi chung:</b>
+      <input type="text" id="rSharedWith" placeholder="Tên tuyến đường đi chung (VD: Tuyến thôn Bản A)"
+        style="width:100%;margin-top:6px;padding:8px;border:1px solid #CE93D8;border-radius:6px;font-size:13px;font-family:inherit">
+    </div>
+    
+    <div class="form-group"><label>Loại mặt đường đoạn này *</label>
       <select id="rMat"><option value="BTN">BTN — Bê tông nhựa</option><option value="Láng nhựa">Láng nhựa</option><option value="BTXM">BTXM — Bê tông xi măng</option><option value="Cấp phối">Cấp phối</option><option value="Đất">Đất</option></select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Bề rộng nền Bn (m)</label>
+        <input type="number" id="rNen" placeholder="m" step="0.1" min="0">
+      </div>
+      <div class="form-group">
+        <label>Bề rộng mặt Bm (m)</label>
+        <input type="number" id="rBeMat" placeholder="m" step="0.1" min="0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Điểm đầu đoạn</label>
+        <input type="text" id="rDiemDau" placeholder="Tên/mô tả điểm đầu đoạn">
+      </div>
+      <div class="form-group">
+        <label>Điểm cuối đoạn (dự kiến)</label>
+        <input type="text" id="rDiemCuoi" placeholder="Tên/mô tả điểm cuối">
+      </div>
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn btn-gray" style="flex:1" onclick="closeModal('mResume')">Hủy</button>
-      <button class="btn btn-suc" style="flex:2" onclick="confirmResume()">▶ Tiếp tục định vị</button>
+      <button class="btn btn-suc" style="flex:2" id="btnConfirmResume" onclick="confirmResume()">▶ Tiếp tục định vị</button>
     </div>
   </div>
 </div>
@@ -436,6 +487,8 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 
 <div class="toast" id="toast"></div>
 
+<!-- JSZip cho xuất KMZ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
@@ -468,6 +521,11 @@ const STYLES = {
   'Đường đô thị': { color:'#C62828', weight:6, dash:null },
   'Đường ngõ xóm, đường ra khu sản xuất': { color:'#E65100', weight:2, dash:'6,4' }
 };
+// Style cho đoạn đi chung: cùng màu nhưng nét đứt, mờ hơn
+function getSharedStyle(loaiDuong) {
+  const s = STYLES[loaiDuong] || { color:'#9CA3AF', weight:3 };
+  return { color:s.color, weight:Math.max(s.weight-1,2), dash:'10,8', opacity:0.6 };
+}
 const RC = { 'Đường xã':'rc-xa','Đường thôn':'rc-thon','Đường đô thị':'rc-dothi','Đường ngõ xóm, đường ra khu sản xuất':'rc-ngo' };
 const BD = { 'Đường xã':'bxa','Đường thôn':'bthon','Đường đô thị':'bdothi','Đường ngõ xóm, đường ra khu sản xuất':'bngo' };
 
@@ -648,25 +706,77 @@ function initMap() {
 
 }
 
+// Tính offset cho đoạn đi chung dựa trên vị trí route trong danh sách
+function getRouteOffset(routeId) {
+  const ids = Object.keys(routeCache).sort();
+  const idx = ids.indexOf(routeId);
+  // Offset luân phiên: 0, +5, -5, +10, -10...
+  const offsets = [0, 5, -5, 10, -10, 15, -15];
+  return offsets[idx % offsets.length] || 0;
+}
+
 function renderRoute(r) {
   if(!r.segments || !r.segments.length) return;
-  const s = STYLES[r.loaiDuong] || { color:'#9CA3AF', weight:3, dash:null };
   const ls = [];
+  // Tính dash offset để đoạn đi chung của các tuyến khác nhau không bị chồng hoàn toàn
+  const routeIdx = Object.keys(routeCache).sort().indexOf(r.id);
+  const dashOffset = (routeIdx * 8) % 20; // mỗi tuyến dịch dash pattern một chút
+  
   r.segments.forEach(seg => {
     if(!seg.points || seg.points.length < 2) return;
+    let s, opacity, dashOff = 0;
+    if(seg.shared) {
+      s = getSharedStyle(r.loaiDuong);
+      opacity = 0.75;
+      dashOff = dashOffset; // offset dash để phân biệt tuyến
+    } else {
+      s = STYLES[r.loaiDuong] || { color:'#9CA3AF', weight:3, dash:null };
+      opacity = 0.88;
+    }
     const pl = L.polyline(seg.points.map(p => [p.lat, p.lng]), {
-      color:s.color, weight:s.weight, opacity:.88, dashArray:s.dash
+      color:s.color, weight:s.weight, opacity, dashArray:s.dash,
+      dashOffset: dashOff
     });
     pl.bindTooltip(`<b>${r.tenTuyen||'Chưa đặt tên'}</b><br><small>${r.loaiDuong}</small>`,
       { sticky:true, className:'road-tip' });
-    pl.bindPopup(`<b>${r.tenTuyen||'Chưa đặt tên'}</b><br><small>
-      📌 <b>Loại:</b> ${r.loaiDuong}<br>
-      📏 <b>Dài:</b> ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}<br>
-      🛣️ <b>Mặt đường:</b> ${seg.loaiMat||r.loaiMatLoai||'N/A'}<br>
-      ↔️ <b>Nền/Mặt:</b> ${r.beNen||'?'}m / ${r.beMat||'?'}m<br>
-      📍 ${r.diemDau||'?'} → ${r.diemCuoi||'?'}<br>
-      🏘️ ${r.communeName||r.communeId||''}
-      </small>`);
+    // Tạo bảng chi tiết tất cả đoạn của tuyến
+    const allSegsTable = r.segments.map((s,i) => {
+      const len = segLen(s);
+      const lenStr = len>=1 ? len.toFixed(2)+'km' : Math.round(len*1000)+'m';
+      const isCurrentSeg = s === seg;
+      const sharedIcon = s.shared ? '🔀 ' : '';
+      const sharedNote = s.shared ? `<br><span style="color:#7B1FA2;font-size:10px">Đi chung: ${s.sharedWith||'tuyến khác'}</span>` : '';
+      const rowBg = isCurrentSeg ? 'background:#FFF9C4' : '';
+      const bnbm = (s.beNen||s.beMat) ? `${s.beNen||'?'}/${s.beMat||'?'}m` : (r.beNen||r.beMat) ? `${r.beNen||'?'}/${r.beMat||'?'}m` : '—';
+      return `<tr style="${rowBg}">
+        <td style="padding:3px 5px;font-weight:${isCurrentSeg?'700':'400'}">${sharedIcon}Đ.${i+1}${sharedNote}</td>
+        <td style="padding:3px 5px">${s.loaiMat||'?'}</td>
+        <td style="padding:3px 5px;white-space:nowrap">${bnbm}</td>
+        <td style="padding:3px 5px;white-space:nowrap">${lenStr}</td>
+      </tr>`;
+    }).join('');
+    
+    pl.bindPopup(`
+      <div style="min-width:220px;font-size:12px">
+        <b style="font-size:13px">${r.tenTuyen||'Chưa đặt tên'}</b>
+        <span style="background:#E3F2FD;color:#1565C0;font-size:10px;padding:2px 6px;border-radius:10px;margin-left:4px">${r.loaiDuong||''}</span>
+        <div style="margin:4px 0;color:#64748B;font-size:11px">
+          📍 ${r.diemDau||'?'} → ${r.diemCuoi||'?'} &nbsp;|&nbsp; 📏 ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}
+        </div>
+        <div style="margin:4px 0;color:#64748B;font-size:11px">🏘️ ${r.communeName||r.communeId||''}</div>
+        <table style="width:100%;border-collapse:collapse;margin-top:6px;border-top:1px solid #eee">
+          <thead>
+            <tr style="background:#F8FAFC">
+              <th style="padding:3px 5px;text-align:left;font-size:11px;color:#64748B">Đoạn</th>
+              <th style="padding:3px 5px;text-align:left;font-size:11px;color:#64748B">Mặt đường</th>
+              <th style="padding:3px 5px;text-align:left;font-size:11px;color:#64748B">Bn/Bm</th>
+              <th style="padding:3px 5px;text-align:left;font-size:11px;color:#64748B">Dài</th>
+            </tr>
+          </thead>
+          <tbody>${allSegsTable}</tbody>
+        </table>
+        <div style="font-size:10px;color:#94a3b8;margin-top:4px">★ Đoạn được tô vàng là đoạn bạn đang bấm</div>
+      </div>`, {maxWidth:300});
     pl.addTo(map);
     ls.push(pl);
   });
@@ -807,7 +917,14 @@ function confirmStart() {
     beNen:parseFloat(V('fNen'))||null, beMat:parseFloat(V('fMat'))||null,
     loaiMatLoai:matLoai, ghiChu:V('fGhi').trim(), chieuDai:null, segments:[]
   };
-  cSeg = { points:[], loaiMat:matLoai };
+  cSeg = { 
+    points:[], loaiMat:matLoai,
+    beNen: parseFloat(V('fNen'))||null,
+    beMat: parseFloat(V('fMat'))||null,
+    diemDau: V('fDau').trim(),
+    diemCuoi: '',
+    shared:false, sharedWith:''
+  };
 
   // Gọi GPS ngay từ đây - đây là user gesture trực tiếp
   if(!startGPS()) return;
@@ -828,15 +945,67 @@ function pauseTracking() {
   toast(`⏸ Lưu đoạn ${cRoute.segments.length} thành công`);
 }
 
-function resumeTracking() { E('resumeN').textContent=cRoute.segments.length+1; openModal('mResume'); }
+let curSegType = 'doc_lap'; // 'doc_lap' hoặc 'di_chung'
+
+function selectSegType(type) {
+  curSegType = type;
+  const btnD = E('btnDocLap'), btnC = E('btnDiChung'), si = E('sharedInfo');
+  if(type === 'doc_lap') {
+    btnD.style.border='2px solid #1565C0'; btnD.style.background='#E3F2FD';
+    btnC.style.border='2px solid var(--bor)'; btnC.style.background='var(--bg)';
+    si.style.display='none';
+    E('btnConfirmResume').textContent='▶ Tiếp tục đoạn độc lập';
+  } else {
+    btnC.style.border='2px solid #7B1FA2'; btnC.style.background='#F3E5F5';
+    btnD.style.border='2px solid var(--bor)'; btnD.style.background='var(--bg)';
+    si.style.display='block';
+    E('btnConfirmResume').textContent='🔀 Ghi đoạn đi chung';
+  }
+}
+
+function resumeTracking() {
+  E('resumeN').textContent = cRoute.segments.length+1;
+  curSegType = 'doc_lap';
+  selectSegType('doc_lap');
+  E('rSharedWith').value = '';
+  E('rDiemDau').value = '';
+  E('rDiemCuoi').value = '';
+  // Gợi ý Bn/Bm từ đoạn trước
+  const lastSeg = cRoute.segments[cRoute.segments.length-1];
+  if(lastSeg) {
+    E('rNen').value = lastSeg.beNen || '';
+    E('rBeMat').value = lastSeg.beMat || '';
+    if(E('rMat')) E('rMat').value = lastSeg.loaiMat || 'BTN';
+  }
+  openModal('mResume');
+}
 
 function confirmResume() {
   const mat = V('rMat');
-  cSeg = { points:[], loaiMat:mat };
-  const s = STYLES[cRoute.loaiDuong]||{color:'#9CA3AF',weight:3,dash:null};
-  livePl = L.polyline([], { color:s.color,weight:s.weight,opacity:.9,dashArray:s.dash }).addTo(map);
+  const isShared = curSegType === 'di_chung';
+  const sharedWith = isShared ? V('rSharedWith').trim() : '';
+  cSeg = { 
+    points:[], loaiMat:mat,
+    beNen: parseFloat(V('rNen'))||null,
+    beMat: parseFloat(V('rBeMat'))||null,
+    diemDau: V('rDiemDau').trim(),
+    diemCuoi: V('rDiemCuoi').trim(),
+    shared:isShared, sharedWith
+  };
+  
+  // Style khác nhau cho đoạn độc lập vs đi chung
+  let s;
+  if(isShared) {
+    s = getSharedStyle(cRoute.loaiDuong);
+    s.opacity = 0.6;
+  } else {
+    s = STYLES[cRoute.loaiDuong]||{color:'#9CA3AF',weight:3,dash:null};
+    s.opacity = 0.9;
+  }
+  livePl = L.polyline([], { color:s.color,weight:s.weight,opacity:s.opacity,dashArray:s.dash }).addTo(map);
   state='tracking'; updateUI(); closeModal('mResume');
-  toast(`▶ Tiếp tục đoạn ${cRoute.segments.length+1} — ${mat}`);
+  const typeLabel = isShared ? `đi chung${sharedWith?' với '+sharedWith:''}` : 'độc lập';
+  toast(`▶ Đoạn ${cRoute.segments.length+1}: ${mat} — ${typeLabel}`);
 }
 
 function endTracking() {
@@ -846,9 +1015,13 @@ function endTracking() {
   }
   if(!cRoute.segments.length){toast('⚠️ Không có đủ dữ liệu GPS');return}
   const tl = totalLen(cRoute);
-  const segsInfo = cRoute.segments.map((s,i)=>
-    `• Đoạn ${i+1}: ${s.loaiMat} — ${segLen(s)>=1?segLen(s).toFixed(2)+' km':Math.round(segLen(s)*1000)+' m'} (${s.points.length} điểm)`
-  ).join('<br>');
+  const segsInfo = cRoute.segments.map((s,i)=>{
+    const lenStr = segLen(s)>=1?segLen(s).toFixed(2)+' km':Math.round(segLen(s)*1000)+' m';
+    const typeIcon = s.shared ? '🔀' : '🛣️';
+    const sharedNote = s.shared && s.sharedWith ? ` đi chung: ${s.sharedWith}` : s.shared ? ' đi chung' : '';
+    const bnbm = (s.beNen||s.beMat) ? ` | Bn=${s.beNen||'?'}m Bm=${s.beMat||'?'}m` : '';
+    return `• ${typeIcon} Đ${i+1}: <b>${s.loaiMat||'?'}</b>${bnbm} — ${lenStr}${sharedNote?'<br>&nbsp;&nbsp;&nbsp;'+sharedNote:''}`;
+  }).join('<br>');
   E('endSum').innerHTML = `<strong>${cRoute.tenTuyen}</strong><br><span style="color:var(--muted)">${cRoute.loaiDuong}</span><br><br>📏 <b>Chiều dài GPS:</b> <span style="color:var(--pri);font-weight:800">${tl>=1?tl.toFixed(3)+' km':Math.round(tl*1000)+' m'}</span><br><br>${segsInfo}`;
   E('eDai').value = tl.toFixed(3);
   E('eCuoi').value = cRoute.diemCuoi||'';
@@ -915,7 +1088,9 @@ function updateUI() {
   } else if(state==='tracking') {
     d.className='s-dot tracking';t.textContent=cRoute?cRoute.tenTuyen:'Đang định vị…';
     sb.style.display='flex';
-    E('segLabel').textContent=`Đoạn ${(cRoute.segments||[]).length+1}: ${cSeg?.loaiMat||''}`;
+    const segN = (cRoute.segments||[]).length+1;
+    const segType = cSeg?.shared ? '🔀 Đi chung' : '🛣️ Độc lập';
+    E('segLabel').textContent=`Đoạn ${segN}: ${cSeg?.loaiMat||''} — ${segType}`;
     E('ctrlTrack').style.display='block'; refreshDist();
   } else if(state==='paused') {
     d.className='s-dot paused';t.textContent=`Tạm dừng — đã lưu ${cRoute.segments.length} đoạn`;
@@ -954,10 +1129,17 @@ function renderRoutes() {
       ${CU.role==='admin'?`<div style="font-size:11px;color:var(--muted);margin-bottom:5px">📍 ${r.communeName||r.communeId}</div>`:''}
       <div class="rc-meta">
         <span>📏 ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'—'}</span>
-        <span>↔️ Nền ${r.beNen||'?'}m</span>
-        <span>🛣️ Mặt ${r.beMat||'?'}m</span>
-        <span>🏗️ ${r.loaiMatLoai||'—'}</span>
         <span>📐 ${(r.segments||[]).length} đoạn</span>
+        ${(r.segments||[]).some(s=>s.shared)?'<span style="color:#7B1FA2">🔀 đi chung</span>':''}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;line-height:1.9">
+        ${(r.segments||[]).map((s,i)=>{
+          const sLen=segLen(s); const lenStr=sLen>=1?sLen.toFixed(2)+'km':Math.round(sLen*1000)+'m';
+          const bn=s.beNen||(i===0?r.beNen:null); const bm=s.beMat||(i===0?r.beMat:null);
+          const bnbm=bn||bm?` | Bn=${bn||'?'}m Bm=${bm||'?'}m`:'';
+          const shared=s.shared?' 🔀':'';
+          return '<span style="background:'+(s.shared?'#F3E5F5':'var(--bg)')+';border-radius:4px;padding:1px 6px;margin-right:4px;display:inline-block">'+'Đ'+(i+1)+': '+(s.loaiMat||'?')+bnbm+' — '+lenStr+shared+'</span>';
+        }).join('')}
       </div>
       ${r.diemDau||r.diemCuoi?`<div style="font-size:11px;color:var(--muted);margin:4px 0">🅰️ ${r.diemDau||'?'} → 🅱️ ${r.diemCuoi||'?'}</div>`:''}
       ${r.ghiChu?`<div style="font-size:11px;color:var(--muted);font-style:italic">💬 ${r.ghiChu}</div>`:''}
@@ -1015,14 +1197,18 @@ async function saveEdit() {
 }
 
 // ==================== KML EXPORT ====================
-function exportKML() {
+async function exportKMZ() {
   const rs=visRoutes();
   if(!rs.length){toast('Chưa có tuyến đường nào để xuất');return}
+  toast('⏳ Đang tạo file KMZ...');
   const dt=new Date().toLocaleDateString('vi-VN');
   let kml=`<?xml version="1.0" encoding="UTF-8"?>\n<kml xmlns="http://www.opengis.net/kml/2.2">\n<Document>\n  <name>GTNT Lào Cai — ${dt}</name>\n  <description>Phòng Quản lý giao thông — Sở Xây dựng Lào Cai</description>\n`;
+  // Style đoạn độc lập (nét liền)
   [['sXa','#1565C0',5],['sThon','#2E7D32',3],['sDT','#C62828',6],['sNgo','#E65100',2]].forEach(([id,hex,w])=>{
     const r=hex.slice(1,3),g=hex.slice(3,5),b=hex.slice(5,7);
     kml+=`  <Style id="${id}"><LineStyle><color>FF${b}${g}${r}</color><width>${w}</width></LineStyle><LabelStyle><scale>0.85</scale></LabelStyle></Style>\n`;
+    // Style đoạn đi chung: opacity thấp hơn (99~60%), width nhỏ hơn
+    kml+=`  <Style id="${id}_shared"><LineStyle><color>99${b}${g}${r}</color><width>${Math.max(w-1,2)}</width></LineStyle><LabelStyle><scale>0.75</scale></LabelStyle></Style>\n`;
   });
   const sm={'Đường xã':'#sXa','Đường thôn':'#sThon','Đường đô thị':'#sDT','Đường ngõ xóm, đường ra khu sản xuất':'#sNgo'};
   if(CU.role==='admin'){
@@ -1032,23 +1218,54 @@ function exportKML() {
     });
   } else rs.forEach(r=>kml+=r2kml(r,sm));
   kml+=`</Document></kml>`;
-  const blob=new Blob([kml],{type:'application/vnd.google-earth.kml+xml'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`GTNT_LaoCai_${Date.now()}.kml`;a.click();
-  closeModal('mMenu'); toast('✅ Xuất KML thành công! ('+rs.length+' tuyến)');
+  // Tạo KMZ = ZIP chứa doc.kml
+  if(typeof JSZip === 'undefined') {
+    // Fallback về KML nếu JSZip chưa load
+    const blob=new Blob([kml],{type:'application/vnd.google-earth.kml+xml'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+    a.download=`GTNT_LaoCai_${Date.now()}.kml`;a.click();
+    closeModal('mMenu'); toast('✅ Xuất KML thành công! ('+rs.length+' tuyến)');
+    return;
+  }
+  const zip = new JSZip();
+  zip.file('doc.kml', kml);
+  const kmzBlob = await zip.generateAsync({type:'blob', compression:'DEFLATE', compressionOptions:{level:6}});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(kmzBlob);
+  a.download=`GTNT_LaoCai_${Date.now()}.kmz`;a.click();
+  closeModal('mMenu'); toast('✅ Xuất KMZ thành công! ('+rs.length+' tuyến)');
 }
+// Alias để tương thích với nút cũ
+function exportKML() { exportKMZ(); }
 
 function r2kml(r,sm) {
   if(!r.segments||!r.segments.length)return'';
   let out='';const style=sm[r.loaiDuong]||'#sNgo';
+  // Tạo mô tả chi tiết từng đoạn
+  const segDetails = r.segments.map((s,i) => {
+    const len = segLen(s);
+    const lenStr = len>=1?len.toFixed(2)+'km':Math.round(len*1000)+'m';
+    const bnbm = (s.beNen||s.beMat)?`Bn=${s.beNen||'?'}m Bm=${s.beMat||'?'}m`:(r.beNen||r.beMat)?`Bn=${r.beNen||'?'}m Bm=${r.beMat||'?'}m`:'';
+    const shared = s.shared?` [Đi chung: ${s.sharedWith||'tuyến khác'}]`:'';
+    return `Đoạn ${i+1}: ${s.loaiMat||'?'} ${bnbm} - ${lenStr}${shared}`;
+  }).join('&#10;');
   const desc=xesc([`Loại đường: ${r.loaiDuong}`,`Điểm đầu: ${r.diemDau||'N/A'}`,`Điểm cuối: ${r.diemCuoi||'N/A'}`,
-    `Chiều dài: ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}`,`Nền: ${r.beNen||'?'}m / Mặt: ${r.beMat||'?'}m`,
-    `Mặt đường: ${r.loaiMatLoai||'N/A'}`,`Đơn vị: ${r.communeName||r.communeId}`,`Ngày KS: ${(r.createdAt||'').slice(0,10)}`].join('&#10;'));
+    `Chiều dài: ${r.chieuDai?r.chieuDai.toFixed(2)+' km':'N/A'}`,
+    `--- Chi tiết từng đoạn ---`,segDetails,
+    `Đơn vị: ${r.communeName||r.communeId}`,`Ngày KS: ${(r.createdAt||'').slice(0,10)}`].join('&#10;'));
   r.segments.forEach((seg,i)=>{
     if(!seg.points||seg.points.length<2)return;
     const coords=seg.points.map(p=>`${p.lng},${p.lat},0`).join('\n              ');
-    const sl=r.segments.length>1?` (Đoạn ${i+1} — ${seg.loaiMat||''})`:' ';
-    out+=`    <Placemark>\n      <name>${xesc(r.tenTuyen||'Tuyến '+r.stt)}${xesc(sl)}</name>\n      <description>${desc}</description>\n      <styleUrl>${style}</styleUrl>\n      <LineString><tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode><coordinates>\n              ${coords}\n      </coordinates></LineString>\n    </Placemark>\n`;
+    // Đoạn đi chung dùng style riêng (mờ hơn, nét đứt ký hiệu trong tên)
+    const segStyle = seg.shared ? (style+'_shared') : style;
+    const sharedNote = seg.shared 
+      ? ` [Đi chung${seg.sharedWith?' với: '+seg.sharedWith:''}]` : '';
+    const sl = r.segments.length>1 
+      ? ` (Đoạn ${i+1} — ${seg.loaiMat||''}${sharedNote})` : sharedNote;
+    const segDesc = seg.shared 
+      ? xesc(`Đoạn đi chung với: ${seg.sharedWith||'tuyến đường khác'}&#10;`) + desc
+      : desc;
+    out+=`    <Placemark>\n      <name>${xesc(r.tenTuyen||'Tuyến '+r.stt)}${xesc(sl)}</name>\n      <description>${segDesc}</description>\n      <styleUrl>${segStyle}</styleUrl>\n      <LineString><tessellate>1</tessellate><altitudeMode>clampToGround</altitudeMode><coordinates>\n              ${coords}\n      </coordinates></LineString>\n    </Placemark>\n`;
   });
   return out;
 }
