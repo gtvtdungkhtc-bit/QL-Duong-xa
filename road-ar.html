@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a1a28">
+<title>Khảo Sát Đường AR — Sở XD Lào Cai</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a1a28;--bg2:#071018;--bg3:#0d2035;
+  --acc:#22aaff;--acc2:#7aceff;
+  --txt:#c0ddf0;--txt2:#4a8aaa;--txt3:#2a5070;
+  --grn:#22cc66;--grn2:#127a3a;--red:#cc2233;--amb:#ddaa22;
+  --brd:#1a3a5c;--r:8px;
+}
+html,body{height:100%;overflow:hidden;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);-webkit-tap-highlight-color:transparent}
+#app{display:flex;flex-direction:column;height:100dvh}
+#hdr{background:var(--bg3);padding:8px 13px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--brd);flex-shrink:0;min-height:44px}
+#hdr h1{font-size:12px;color:var(--acc2);flex:1;letter-spacing:.3px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--txt3);transition:all .3s}
+.dot.on{background:var(--grn);box-shadow:0 0 6px var(--grn)}
+.dot.rec{background:var(--red);box-shadow:0 0 8px var(--red);animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+#tbadge{padding:2px 7px;border-radius:10px;font-size:10px;background:var(--bg2);border:1px solid var(--brd);color:var(--txt3)}
+#tbadge.on{background:#0a3a1a;border-color:var(--grn2);color:#7af0b0}
+#tbadge.rec{background:#3a0a0a;border-color:var(--red);color:#ff8888}
+#tabs{display:flex;background:var(--bg2);border-bottom:1px solid var(--brd);flex-shrink:0}
+.tb{flex:1;padding:9px 2px;font-size:11px;color:var(--txt3);border:none;background:transparent;cursor:pointer;border-bottom:3px solid transparent;transition:all .15s;letter-spacing:.2px}
+.tb.act{color:var(--acc2);border-bottom-color:var(--acc)}
+#content{flex:1;overflow:hidden;position:relative}
+.pane{position:absolute;inset:0;overflow-y:auto;padding:10px;display:none}
+.pane.act{display:block}
+#p-ar{padding:0;overflow:hidden;display:none}
+#p-ar.act{display:flex;flex-direction:column}
+
+/* Cards */
+.card{background:var(--bg2);border:1px solid var(--brd);border-radius:var(--r);padding:11px;margin-bottom:8px}
+.ctitle{font-size:9px;color:var(--txt2);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid var(--brd)}
+.f{margin-bottom:6px}
+.f label{display:block;font-size:10px;color:var(--txt2);margin-bottom:3px}
+.f input,.f select{width:100%;background:var(--bg3);border:1px solid var(--brd);color:var(--txt);padding:7px 9px;border-radius:4px;font-size:13px;font-family:inherit;-webkit-appearance:none}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.btn{display:block;width:100%;padding:10px;border:1px solid var(--brd);border-radius:var(--r);background:var(--bg3);color:var(--acc2);font-size:12px;font-family:inherit;cursor:pointer;text-align:center;transition:all .13s}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--acc);border-color:var(--acc);color:#fff}
+.btn.grn{background:var(--grn2);border-color:var(--grn);color:#afffcc}
+.btn.red{background:#4a0a10;border-color:var(--red);color:#ffaaaa}
+.btn.sm{padding:6px 11px;font-size:11px;width:auto;display:inline-block}
+.btn.rec-btn{background:#cc0022;border-color:#ff3344;color:white;font-size:14px;padding:14px;letter-spacing:1px}
+.btn.stop-btn{background:#333;border-color:#888;color:white}
+.brow{display:flex;gap:6px;margin-top:7px}
+.srow{display:flex;gap:7px}
+.sc{flex:1;background:var(--bg3);border-radius:5px;padding:8px;text-align:center}
+.sc .v{font-size:16px;color:var(--acc2);font-weight:600}
+.sc .l{font-size:9px;color:var(--txt3);margin-top:1px}
+
+/* Survey Camera View */
+#survey-cam-wrap{position:relative;width:100%;background:#000;border-radius:var(--r);overflow:hidden;margin-bottom:8px;aspect-ratio:16/9}
+#survey-vid{width:100%;height:100%;object-fit:cover;display:block}
+#cam-overlay{position:absolute;inset:0;pointer-events:none}
+.cam-crosshair{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border:1.5px solid rgba(255,255,255,.5);border-radius:50%}
+.cam-crosshair::before,.cam-crosshair::after{content:'';position:absolute;background:rgba(255,255,255,.5)}
+.cam-crosshair::before{width:1px;height:20px;left:50%;top:50%;transform:translate(-50%,-50%)}
+.cam-crosshair::after{width:20px;height:1px;left:50%;top:50%;transform:translate(-50%,-50%)}
+.cam-info{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);border-radius:5px;padding:5px 8px;font-size:10px;color:#fff;line-height:1.6;backdrop-filter:blur(4px)}
+.cam-rec-badge{position:absolute;top:8px;right:8px;background:rgba(204,0,34,.85);border-radius:4px;padding:4px 9px;font-size:11px;color:white;font-weight:700;letter-spacing:1px;display:none}
+.cam-rec-badge.on{display:block;animation:pulse 1s ease-in-out infinite}
+.rec-timer{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);border-radius:4px;padding:3px 10px;font-size:13px;color:#fff;font-family:'Courier New',monospace;letter-spacing:2px;display:none}
+.rec-timer.on{display:block}
+#no-cam-msg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;color:var(--txt2);font-size:13px;background:#050e18}
+#no-cam-msg .icon{font-size:36px;opacity:.4}
+
+/* Params toggle */
+.param-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:6px 0}
+.param-toggle span{font-size:11px;color:var(--acc2)}
+.param-toggle .arr{font-size:14px;color:var(--txt3);transition:transform .2s}
+.param-toggle.open .arr{transform:rotate(180deg)}
+#param-body{display:none}
+#param-body.open{display:block}
+
+/* AR Tab */
+#ar-wrap{flex:1;position:relative;overflow:hidden;background:#000}
+#ar-vid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+#ar-canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#ar-hud{position:absolute;top:0;left:0;right:0;padding:8px;display:flex;gap:6px;background:linear-gradient(rgba(0,0,0,.7),transparent)}
+.hud-badge{padding:4px 8px;border-radius:4px;font-size:11px;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#fff;backdrop-filter:blur(4px);cursor:pointer;transition:all .15s;white-space:nowrap}
+.hud-badge.on{background:rgba(34,170,255,.4);border-color:rgba(34,170,255,.6)}
+#ar-km{font-size:13px;color:#ffd700;font-weight:600}
+#ar-bottom{padding:8px;background:linear-gradient(transparent,rgba(0,0,0,.85));position:absolute;bottom:0;left:0;right:0}
+#ar-timeline{width:100%;margin-bottom:8px;-webkit-appearance:none;height:4px;background:rgba(255,255,255,.2);border-radius:2px}
+#ar-timeline::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--acc2);cursor:pointer}
+.ar-ctrl-row{display:flex;gap:8px;align-items:center;justify-content:center}
+.ar-btn{width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.5);color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.ar-btn:active{background:rgba(34,170,255,.5)}
+#ar-no-data{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:var(--txt2);font-size:13px;text-align:center;padding:20px}
+#ar-calib{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:rgba(0,0,0,.7);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:10px;display:none;backdrop-filter:blur(6px)}
+#ar-calib.on{display:block}
+.calib-row{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.calib-row label{font-size:9px;color:rgba(255,255,255,.6);letter-spacing:.8px}
+.calib-row input[type=range]{width:90px;-webkit-appearance:none;height:3px;background:rgba(255,255,255,.2);border-radius:2px}
+.calib-row input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--acc2)}
+.calib-row .cv{font-size:10px;color:var(--acc2);text-align:right}
+
+/* Design/station list */
+.sti{background:var(--bg3);border:1px solid var(--brd);border-radius:5px;padding:8px;margin-bottom:5px}
+.sti .km{font-size:11px;color:var(--acc2);font-weight:600}
+.sti .inf{font-size:9px;color:var(--txt3);margin-top:2px;line-height:1.6}
+
+/* Toast */
+#toast{position:fixed;top:60px;left:50%;transform:translateX(-50%);background:var(--grn2);border:1px solid var(--grn);color:#a0f8c0;padding:6px 18px;border-radius:16px;font-size:12px;z-index:999;opacity:0;transition:opacity .22s;pointer-events:none;white-space:nowrap;max-width:90vw}
+#toast.on{opacity:1}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg2)}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<div id="hdr">
+  <div class="dot" id="gdot"></div>
+  <h1>🛣️ Khảo Sát Đường AR — Sở Xây Dựng Lào Cai</h1>
+  <span id="tbadge">0 pts</span>
+</div>
+
+<!-- TABS -->
+<div id="tabs">
+  <button class="tb act" onclick="ST('survey')">📹 Khảo Sát</button>
+  <button class="tb" onclick="ST('design')">📐 Thiết Kế</button>
+  <button class="tb" onclick="ST('ar')">🎥 AR Video</button>
+</div>
+
+<div id="content">
+
+<!-- ══════════ SURVEY TAB ══════════ -->
+<div class="pane act" id="p-survey">
+
+  <!-- Camera view -->
+  <div id="survey-cam-wrap">
+    <video id="survey-vid" autoplay playsinline muted></video>
+    <div id="cam-overlay">
+      <div class="cam-crosshair"></div>
+      <div class="cam-info" id="cam-info">GPS: chờ…<br>Track: 0 điểm</div>
+      <div class="cam-rec-badge" id="rec-badge">⏺ REC</div>
+      <div class="rec-timer" id="rec-timer">00:00:00</div>
+    </div>
+    <div id="no-cam-msg" id="ncm">
+      <div class="icon">📷</div>
+      <div>Nhấn "Bắt đầu" để mở camera</div>
+      <div style="font-size:11px;color:var(--txt3)">Cần trình duyệt Chrome/Safari + cho phép camera</div>
+    </div>
+  </div>
+
+  <!-- Record controls -->
+  <div class="card">
+    <div class="ctitle">Điều Khiển Ghi Hình &amp; GPS</div>
+    <div class="brow">
+      <button class="btn grn" id="btn-rec" onclick="startRec()">▶ Bắt đầu</button>
+      <button class="btn red" id="btn-stop-rec" style="display:none" onclick="stopRec()">⬛ Dừng &amp; Lưu</button>
+    </div>
+    <div style="display:flex;gap:5px;margin-top:7px;flex-wrap:wrap">
+      <span class="hud-badge" id="bs-status">Chờ</span>
+      <span class="hud-badge" id="bs-pts">0 pts</span>
+      <span class="hud-badge" id="bs-dist">0m</span>
+      <span class="hud-badge" id="bs-acc">GPS—</span>
+    </div>
+  </div>
+
+  <!-- Parameters (collapsible) -->
+  <div class="card">
+    <div class="param-toggle" id="ptog" onclick="toggleParams()">
+      <div class="ctitle" style="margin:0">Tham Số Mặt Cắt Tại Điểm Này</div>
+      <span class="arr">▼</span>
+    </div>
+    <div id="param-body">
+      <div style="height:8px"></div>
+      <div class="g2">
+        <div class="f"><label>Bn (m)</label><input type="number" id="pBn" value="6.0" min="3" max="15" step="0.5"></div>
+        <div class="f"><label>Bm (m)</label><input type="number" id="pBm" value="3.5" min="2" max="12" step="0.5"></div>
+        <div class="f"><label>h rãnh (m)</label><input type="number" id="pHr" value="0.5" min="0.1" max="1.5" step="0.05"></div>
+        <div class="f"><label>b rãnh (m)</label><input type="number" id="pBr" value="0.4" min="0.1" max="0.8" step="0.05"></div>
+        <div class="f"><label>Mái đào 1:m</label><input type="number" id="pMd" value="1.0" min="0.5" max="3" step="0.25"></div>
+        <div class="f"><label>Cao đào (m)</label><input type="number" id="pHd" value="2.5" min="0.5" max="12" step="0.5"></div>
+        <div class="f"><label>Mái đắp 1:m</label><input type="number" id="pMp" value="1.5" min="1" max="3" step="0.25"></div>
+        <div class="f"><label>Cao đắp (m)</label><input type="number" id="pHp" value="3.0" min="0.5" max="12" step="0.5"></div>
+      </div>
+      <div class="f"><label>Mặt đường hiện trạng</label>
+        <select id="pSurf"><option value="BTN">BTN</option><option value="BTXM">BTXM</option><option value="Lang">Láng nhựa</option><option value="CP" selected>Cấp phối</option><option value="Dat">Đất</option></select>
+      </div>
+      <div class="f"><label>Ghi chú vị trí</label><input type="text" id="pNote" placeholder="Cua nguy hiểm, đầu cầu..."></div>
+    </div>
+    <button class="btn grn" style="margin-top:8px" onclick="saveStation()">📌 Lưu trạm tại đây</button>
+  </div>
+
+  <!-- Station list -->
+  <div class="card">
+    <div class="ctitle">Trạm Đã Lưu (<span id="stn-cnt">0</span>)</div>
+    <div id="stn-list"><div style="text-align:center;font-size:11px;color:var(--txt3);padding:6px">Chưa có trạm</div></div>
+  </div>
+
+  <!-- Export -->
+  <div class="card">
+    <div class="ctitle">Xuất Dữ Liệu Khảo Sát</div>
+    <div class="brow">
+      <button class="btn sm" onclick="exportAll()">📤 Xuất ZIP (Video + GPS)</button>
+      <button class="btn sm" onclick="exportGPS()">📤 GPS JSON</button>
+    </div>
+    <p style="font-size:10px;color:var(--txt3);margin-top:7px;line-height:1.7">
+      File ZIP chứa: <b style="color:var(--acc2)">video.webm</b> + <b style="color:var(--acc2)">survey.json</b> (GPS + tham số).<br>
+      Import sang tab Thiết Kế hoặc AR Video để xem phối cảnh.
+    </p>
+  </div>
+</div><!-- end survey -->
+
+<!-- ══════════ DESIGN TAB ══════════ -->
+<div class="pane" id="p-design">
+  <div class="card">
+    <div class="ctitle">Import Dữ Liệu Khảo Sát</div>
+    <div class="f"><label>Video (webm/mp4)</label><input type="file" accept="video/*" id="imp-vid" onchange="loadVideo(event)" style="color:var(--txt2);padding:5px 0"></div>
+    <div class="f"><label>GPS JSON (survey.json)</label><input type="file" accept=".json" id="imp-json" onchange="loadJSON(event)" style="color:var(--txt2);padding:5px 0"></div>
+    <div class="brow">
+      <button class="btn sm" onclick="loadDemo()">▷ Dữ liệu mẫu</button>
+      <button class="btn sm grn" onclick="transferFromSurvey()">↑ Dùng dữ liệu vừa khảo sát</button>
+    </div>
+    <div id="imp-status" style="font-size:11px;margin-top:6px;color:var(--txt3)"></div>
+  </div>
+
+  <div id="des-body" style="display:none">
+    <div class="card"><div class="ctitle">Thông Tin Tuyến</div><div class="srow" id="des-stats"></div></div>
+    <div class="card">
+      <div class="ctitle">Thông Số Thiết Kế Mới</div>
+      <div class="g2">
+        <div class="f"><label>Bn thiết kế (m)</label><input type="number" id="dBn" value="7.0" min="3" max="15" step="0.5"></div>
+        <div class="f"><label>Bm thiết kế (m)</label><input type="number" id="dBm" value="4.0" min="2" max="12" step="0.5"></div>
+      </div>
+      <div class="g2">
+        <div class="f"><label>Mặt đường thiết kế</label>
+          <select id="dSurf"><option value="BTN">BTN 7cm</option><option value="BTXM">BTXM 20cm</option><option value="Lang">Láng nhựa 2 lớp</option></select>
+        </div>
+        <div class="f"><label>Rãnh dọc gia cố</label>
+          <select id="dRanh"><option value="BT">Bê tông M200</option><option value="XM">Xây gạch</option></select>
+        </div>
+      </div>
+      <div class="f"><label>h rãnh thiết kế (m)</label><input type="number" id="dHr" value="0.6" min="0.2" max="1.5" step="0.05"></div>
+      <button class="btn pri" onclick="applyDesign()">✓ Áp dụng — Cập nhật AR</button>
+    </div>
+    <div class="card"><div class="ctitle">Mặt Cắt Dọc</div><div id="prof-wrap" style="background:white;border-radius:4px;overflow:hidden"></div></div>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <div class="ctitle" style="margin:0">Mặt Cắt Ngang — Trang <span id="cs-pg">1</span></div>
+        <div style="display:flex;gap:5px">
+          <button class="btn sm" onclick="csPage(-1)">◀</button>
+          <button class="btn sm" onclick="csPage(+1)">▶</button>
+          <button class="btn sm" onclick="window.print()">🖨️</button>
+        </div>
+      </div>
+      <div id="cs-wrap"></div>
+    </div>
+  </div>
+</div><!-- end design -->
+
+<!-- ══════════ AR TAB ══════════ -->
+<div class="pane" id="p-ar">
+  <div id="ar-wrap">
+    <!-- Video background -->
+    <video id="ar-vid" playsinline loop></video>
+    <!-- Three.js overlay canvas -->
+    <canvas id="ar-canvas"></canvas>
+
+    <!-- HUD top -->
+    <div id="ar-hud">
+      <span id="ar-km" class="hud-badge">—</span>
+      <span class="hud-badge on" id="tog-pav" onclick="togLayer('pav')" title="Mặt đường thiết kế">🛣 Mặt đường</span>
+      <span class="hud-badge on" id="tog-ranh" onclick="togLayer('ranh')" title="Rãnh dọc">💧 Rãnh</span>
+      <span class="hud-badge on" id="tog-edge" onclick="togLayer('edge')" title="Ranh giới nền">📏 Ranh giới</span>
+      <span class="hud-badge" id="tog-calib" onclick="togCalib()" title="Căn chỉnh camera">⚙️</span>
+    </div>
+
+    <!-- Calibration panel -->
+    <div id="ar-calib">
+      <div style="font-size:9px;color:rgba(255,255,255,.6);margin-bottom:8px;letter-spacing:.8px">CALIBRATE CAMERA</div>
+      <div class="calib-row">
+        <label>ĐỘ CAO (m) <span class="cv" id="cv-h">1.4</span></label>
+        <input type="range" min="0.8" max="3" step="0.1" value="1.4" oninput="setCalib('h',this.value)">
+      </div>
+      <div class="calib-row">
+        <label>NGHIÊNG (°) <span class="cv" id="cv-tilt">-8</span></label>
+        <input type="range" min="-25" max="5" step="1" value="-8" oninput="setCalib('tilt',this.value)">
+      </div>
+      <div class="calib-row">
+        <label>FOV (°) <span class="cv" id="cv-fov">68</span></label>
+        <input type="range" min="40" max="100" step="2" value="68" oninput="setCalib('fov',this.value)">
+      </div>
+      <div class="calib-row">
+        <label>OFFSET NGANG (m) <span class="cv" id="cv-side">0</span></label>
+        <input type="range" min="-2" max="2" step="0.1" value="0" oninput="setCalib('side',this.value)">
+      </div>
+    </div>
+
+    <!-- No data message -->
+    <div id="ar-no-data">
+      <div style="font-size:32px">🎬</div>
+      <div style="color:var(--acc2);font-size:14px;font-weight:600">Chưa có dữ liệu</div>
+      <div>Import video + GPS hoặc dùng dữ liệu mẫu ở tab Thiết Kế</div>
+      <button class="btn sm pri" style="margin-top:8px" onclick="ST('design');loadDemo()">▷ Tải dữ liệu mẫu</button>
+    </div>
+
+    <!-- Controls bottom -->
+    <div id="ar-bottom">
+      <input type="range" id="ar-timeline" min="0" max="100" value="0" step="0.1" oninput="seekVideo(this.value)">
+      <div class="ar-ctrl-row">
+        <button class="ar-btn" onclick="arPlay()" id="btn-arplay">▶</button>
+        <button class="ar-btn" onclick="arReset()">⟳</button>
+        <button class="ar-btn" onclick="togBeforeAfter()" id="btn-ba" title="Before/After">◐</button>
+        <div style="color:rgba(255,255,255,.7);font-size:11px;min-width:50px;text-align:center" id="ar-time">0:00</div>
+        <button class="ar-btn" onclick="togFullAR()" title="Toàn màn hình">⛶</button>
+      </div>
+    </div>
+  </div>
+</div><!-- end ar -->
+
+</div><!-- content -->
+</div><!-- app -->
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+'use strict';
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// GLOBAL STATE
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const R6=6371000;
+const APP={
+  // Survey
+  camStream:null, mediaRec:null, recChunks:[], recStartMs:0, recTimer:null, recSecs:0,
+  gpsWid:null, tracking:false,
+  track:[],          // [{lat,lon,ele,ch,t}]  — t = ms since recordStart
+  stations:[],       // [{id,lat,lon,ele,ch,params,note,vidT}]
+  videoBlob:null, videoURL:null,
+  // Design
+  desTrack:null, desStns:[], desPrm:null, csPage:0,
+  // AR
+  arReady:false,
+  // Calibration
+  calib:{h:1.4, tilt:-8, fov:68, side:0},
+  // Layers
+  layers:{pav:true, ranh:true, edge:true},
+  beforeAfter:false,
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UTILS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function hav(la1,lo1,la2,lo2){const dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180,a=Math.sin(dLa/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)**2;return R6*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+function trkLen(){let d=0;for(let i=1;i<APP.track.length;i++)d+=hav(APP.track[i-1].lat,APP.track[i-1].lon,APP.track[i].lat,APP.track[i].lon);return d;}
+function kmLbl(d){return`KM${Math.floor(d/1000)}+${(d%1000).toFixed(0).padStart(3,'0')}`;}
+function fmtD(d){return d>999?(d/1000).toFixed(3)+'km':d.toFixed(0)+'m';}
+function fmtTime(s){const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=Math.floor(s%60);return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('on');setTimeout(()=>t.classList.remove('on'),2500);}
+function dl(n,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=n;a.click();}
+function defP(){return{Bn:6,Bm:3.5,h_ranh:.5,b_ranh:.4,m_ranh:1,m_dao:1,h_dao:2.5,m_dap:1.5,h_dap:3,surface:'CP'};}
+function getCurP(){return{Bn:+document.getElementById('pBn').value,Bm:+document.getElementById('pBm').value,h_ranh:+document.getElementById('pHr').value,b_ranh:+document.getElementById('pBr').value,m_ranh:1,m_dao:+document.getElementById('pMd').value,h_dao:+document.getElementById('pHd').value,m_dap:+document.getElementById('pMp').value,h_dap:+document.getElementById('pHp').value,surface:document.getElementById('pSurf').value};}
+
+function chainCum(pts){let c=0;return pts.map((p,i)=>{if(i>0)c+=hav(pts[i-1].lat,pts[i-1].lon,p.lat,p.lon);return{...p,ch:c};});}
+function interpP(ch){const s=APP.desStns;if(!s||!s.length)return defP();const so=[...s].sort((a,b)=>a.ch-b.ch);if(ch<=so[0].ch)return{...so[0].params};if(ch>=so[so.length-1].ch)return{...so[so.length-1].params};const hi=so.findIndex(x=>x.ch>ch),lo=hi-1;const t=(ch-so[lo].ch)/(so[hi].ch-so[lo].ch);const r={};Object.keys(so[lo].params).forEach(k=>{r[k]=typeof so[lo].params[k]==='number'?+(so[lo].params[k]+t*(so[hi].params[k]-so[lo].params[k])).toFixed(3):so[lo].params[k];});return r;}
+function mergeD(p){if(!APP.desPrm)return p;return{...p,Bn:APP.desPrm.Bn,Bm:APP.desPrm.Bm,h_ranh:APP.desPrm.h_ranh||p.h_ranh};}
+function resample(pts,iv){if(!pts||pts.length<2)return[];const total=pts[pts.length-1].ch,out=[];for(let d=0;d<=total+.001;d+=iv){const dc=Math.min(d,total);let lo=0,hi=pts.length-1;while(lo<hi-1){const m=(lo+hi)>>1;pts[m].ch<=dc?lo=m:hi=m;}if(lo===hi||pts[lo].ch===dc){out.push({...pts[lo],ch:dc});}else{const t=(dc-pts[lo].ch)/(pts[hi].ch-pts[lo].ch);out.push({lat:pts[lo].lat+t*(pts[hi].lat-pts[lo].lat),lon:pts[lo].lon+t*(pts[hi].lon-pts[lo].lon),ele:pts[lo].ele+t*(pts[hi].ele-pts[lo].ele),ch:dc,vidT:pts[lo].vidT?pts[lo].vidT+t*((pts[hi].vidT||0)-(pts[lo].vidT||0)):undefined});}}return out;}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// SURVEY — CAMERA + GPS RECORDING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+async function startRec(){
+  // Start GPS first
+  await startGPS();
+
+  // Open camera
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080},frameRate:{ideal:30}},
+      audio:true
+    });
+    APP.camStream=stream;
+    const vid=document.getElementById('survey-vid');
+    vid.srcObject=stream;
+    vid.play();
+    document.getElementById('no-cam-msg').style.display='none';
+
+    // Start recording
+    const mimeType=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':MediaRecorder.isTypeSupported('video/webm')?'video/webm':'video/mp4';
+    APP.mediaRec=new MediaRecorder(stream,{mimeType,videoBitsPerSecond:3000000});
+    APP.recChunks=[];
+    APP.recStartMs=Date.now();
+    APP.mediaRec.ondataavailable=e=>{if(e.data&&e.data.size>0)APP.recChunks.push(e.data);};
+    APP.mediaRec.onstop=finishRecording;
+    APP.mediaRec.start(500);
+
+    // Timer
+    APP.recSecs=0;
+    APP.recTimer=setInterval(()=>{
+      APP.recSecs++;
+      document.getElementById('rec-timer').textContent=fmtTime(APP.recSecs);
+    },1000);
+
+    document.getElementById('rec-timer').className='rec-timer on';
+    document.getElementById('rec-badge').className='cam-rec-badge on';
+    document.getElementById('btn-rec').style.display='none';
+    document.getElementById('btn-stop-rec').style.display='';
+    document.getElementById('bs-status').textContent='⏺ REC';
+    document.getElementById('bs-status').className='hud-badge';
+    document.getElementById('bs-status').style.background='rgba(204,0,34,.7)';
+    document.getElementById('bs-status').style.color='white';
+    document.getElementById('gdot').className='dot rec';
+    document.getElementById('tbadge').className='rec';
+    toast('✓ Đang ghi video + GPS');
+
+  }catch(err){
+    console.error(err);
+    // Camera failed but GPS started - still track GPS
+    document.getElementById('no-cam-msg').style.display='flex';
+    document.getElementById('no-cam-msg').innerHTML=`<div class="icon">⚠️</div><div>${err.message}</div><div style="font-size:10px;color:var(--txt3)">GPS vẫn đang chạy. Cần HTTPS cho camera.</div>`;
+    toast('Camera lỗi — chỉ ghi GPS');
+    // Still do timer for GPS
+    APP.recSecs=0;
+    APP.recStartMs=Date.now();
+    APP.recTimer=setInterval(()=>{APP.recSecs++;document.getElementById('rec-timer').textContent=fmtTime(APP.recSecs);},1000);
+    document.getElementById('rec-timer').className='rec-timer on';
+    document.getElementById('btn-rec').style.display='none';
+    document.getElementById('btn-stop-rec').style.display='';
+  }
+}
+
+function stopRec(){
+  if(APP.mediaRec&&APP.mediaRec.state!=='inactive') APP.mediaRec.stop();
+  else finishRecording();
+  stopGPS();
+  if(APP.recTimer){clearInterval(APP.recTimer);APP.recTimer=null;}
+  if(APP.camStream){APP.camStream.getTracks().forEach(t=>t.stop());APP.camStream=null;}
+  document.getElementById('btn-rec').style.display='';
+  document.getElementById('btn-stop-rec').style.display='none';
+  document.getElementById('rec-badge').className='cam-rec-badge';
+  document.getElementById('rec-timer').className='rec-timer';
+  document.getElementById('gdot').className='dot';
+  document.getElementById('tbadge').className='';
+  document.getElementById('bs-status').textContent='Dừng';
+  document.getElementById('bs-status').style.background='';
+  document.getElementById('bs-status').style.color='';
+}
+
+function finishRecording(){
+  if(!APP.recChunks.length) return;
+  const mimeType=APP.recChunks[0]?.type||'video/webm';
+  APP.videoBlob=new Blob(APP.recChunks,{type:mimeType});
+  APP.videoURL=URL.createObjectURL(APP.videoBlob);
+  toast(`✓ Video ${(APP.videoBlob.size/1024/1024).toFixed(1)}MB | ${APP.track.length} GPS pts`);
+}
+
+// ── GPS ──────────────────────────────────────────────────────
+function startGPS(){
+  return new Promise(resolve=>{
+    if(!navigator.geolocation){resolve();return;}
+    APP.track=[];APP.tracking=true;
+    APP.gpsWid=navigator.geolocation.watchPosition(pos=>{
+      const{latitude:lat,longitude:lon,altitude:ele,accuracy:acc}=pos.coords;
+      document.getElementById('gdot').className=APP.mediaRec?'dot rec':'dot on';
+      document.getElementById('bs-acc').textContent=`±${acc.toFixed(0)}m`;
+      const last=APP.track[APP.track.length-1];
+      if(!last||hav(last.lat,last.lon,lat,lon)>2){
+        const t=(Date.now()-APP.recStartMs)/1000; // seconds since start
+        APP.track.push({lat,lon,ele:ele||0,t});
+      }
+      // Update camera overlay info
+      const len=trkLen();
+      document.getElementById('cam-info').innerHTML=`GPS ±${acc.toFixed(0)}m<br>${APP.track.length} pts · ${fmtD(len)}`;
+      document.getElementById('bs-pts').textContent=APP.track.length+' pts';
+      document.getElementById('bs-dist').textContent=fmtD(len);
+      document.getElementById('tbadge').textContent=APP.track.length+' pts';
+      resolve();
+    },err=>{console.warn('GPS:',err);resolve();},{enableHighAccuracy:true,maximumAge:1500,timeout:30000});
+  });
+}
+
+function stopGPS(){
+  if(APP.gpsWid)navigator.geolocation.clearWatch(APP.gpsWid);
+  APP.tracking=false;
+}
+
+// ── Stations ──────────────────────────────────────────────────
+function saveStation(){
+  const last=APP.track[APP.track.length-1];
+  if(!last&&APP.mediaRec?.state==='recording'){toast('⚠ Đang chờ GPS...');return;}
+  const fakePos=last||{lat:22.3,lon:104.1,ele:800};
+  const ch=trkLen();
+  const vidT=APP.recSecs;
+  APP.stations.push({id:Date.now(),...fakePos,ch,vidT,params:getCurP(),note:document.getElementById('pNote').value});
+  document.getElementById('pNote').value='';
+  renderStnList();
+  toast(`✓ Trạm ${kmLbl(ch)} (${fmtTime(vidT)})`);
+}
+function delStn(id){APP.stations=APP.stations.filter(s=>s.id!==id);renderStnList();}
+function renderStnList(){
+  const el=document.getElementById('stn-list');
+  document.getElementById('stn-cnt').textContent=APP.stations.length;
+  if(!APP.stations.length){el.innerHTML='<div style="text-align:center;font-size:11px;color:var(--txt3);padding:6px">Chưa có trạm</div>';return;}
+  el.innerHTML=[...APP.stations].reverse().map(s=>`<div class="sti"><div style="display:flex;justify-content:space-between"><span class="km">📍 ${kmLbl(s.ch)} — ${fmtTime(s.vidT||0)}</span><button onclick="delStn(${s.id})" style="background:none;border:none;color:var(--red);cursor:pointer;padding:0 4px">✕</button></div><div class="inf">Bn=${s.params.Bn}m Bm=${s.params.Bm}m | đào1:${s.params.m_dao}(h=${s.params.h_dao}) đắp1:${s.params.m_dap}(h=${s.params.h_dap})</div>${s.note?`<div style="font-size:9px;color:var(--amb)">${s.note}</div>`:''}</div>`).join('');
+}
+function toggleParams(){
+  const tog=document.getElementById('ptog');
+  const body=document.getElementById('param-body');
+  tog.classList.toggle('open');
+  body.classList.toggle('open');
+}
+
+// ── Export ───────────────────────────────────────────────────
+function exportAll(){
+  if(!APP.videoBlob&&APP.track.length===0){toast('⚠ Chưa có dữ liệu!');return;}
+  exportGPS();
+  if(APP.videoURL){
+    fetch(APP.videoURL).then(r=>r.blob()).then(b=>{dl('survey-video.webm',b);});
+    toast('✓ Đang tải xuống video + JSON');
+  }else{toast('✓ Đã xuất GPS JSON (không có video)');}
+}
+function exportGPS(){
+  const data={recordStartMs:APP.recStartMs,totalDuration:APP.recSecs,track:chainCum(APP.track),stations:APP.stations.map(s=>({ch:s.ch,lat:s.lat,lon:s.lon,ele:s.ele,vidT:s.vidT,params:s.params,note:s.note}))};
+  dl('survey.json',new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// DESIGN — IMPORT & DISPLAY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function loadVideo(e){
+  const f=e.target.files[0];if(!f)return;
+  APP.videoURL=URL.createObjectURL(f);
+  APP.videoBlob=f;
+  document.getElementById('imp-status').textContent='✓ Video: '+f.name;
+  document.getElementById('imp-status').style.color='var(--grn)';
+  // Also load into AR video element
+  const arVid=document.getElementById('ar-vid');
+  arVid.src=APP.videoURL;
+  checkARReady();
+}
+
+function loadJSON(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      loadSurveyData(d);
+      document.getElementById('imp-status').textContent='✓ GPS: '+d.track.length+' điểm, '+d.stations.length+' trạm';
+      document.getElementById('imp-status').style.color='var(--grn)';
+    }catch(err){toast('⚠ Lỗi JSON: '+err.message);}
+  };
+  r.readAsText(f);
+}
+
+function transferFromSurvey(){
+  if(APP.track.length<2){toast('⚠ Chưa khảo sát!');return;}
+  const trackWithCh=chainCum(APP.track);
+  loadSurveyData({track:trackWithCh,stations:APP.stations});
+  if(APP.videoURL){
+    document.getElementById('ar-vid').src=APP.videoURL;
+    checkARReady();
+  }
+  document.getElementById('imp-status').textContent='✓ Dùng dữ liệu từ tab Khảo Sát';
+  document.getElementById('imp-status').style.color='var(--grn)';
+  toast('✓ Đã chuyển dữ liệu khảo sát');
+}
+
+function loadSurveyData(d){
+  APP.desTrack=d.track;
+  APP.desStns=d.stations||[];
+  APP.csPage=0;
+  const total=d.track[d.track.length-1].ch;
+  const els=d.track.map(p=>p.ele);
+  document.getElementById('des-body').style.display='block';
+  document.getElementById('des-stats').innerHTML=`<div class="sc"><div class="v">${(total/1000).toFixed(3)}</div><div class="l">km</div></div><div class="sc"><div class="v">${d.track.length}</div><div class="l">GPS pts</div></div><div class="sc"><div class="v">${Math.max(...els).toFixed(0)}m</div><div class="l">cao max</div></div><div class="sc"><div class="v">${(Math.max(...els)-Math.min(...els)).toFixed(0)}m</div><div class="l">chênh</div></div>`;
+  renderProfile();renderCS();
+  if(AR3.inited)AR3.rebuild();
+}
+
+function applyDesign(){
+  APP.desPrm={Bn:+document.getElementById('dBn').value,Bm:+document.getElementById('dBm').value,surface:document.getElementById('dSurf').value,ranhType:document.getElementById('dRanh').value,h_ranh:+document.getElementById('dHr').value};
+  renderCS();
+  if(AR3.inited)AR3.rebuild();
+  toast('✓ Áp dụng — AR đã cập nhật');
+}
+
+function loadDemo(){
+  const pts=[];let cum=0;
+  for(let i=0;i<=80;i++){
+    const lat=22.3+i*.0002,lon=104.1+i*.00015;
+    const ele=820+55*Math.sin(i/7)+i*1.4+7*Math.sin(i/2.3);
+    if(i>0)cum+=hav(pts[i-1].lat,pts[i-1].lon,lat,lon);
+    const vidT=i*1.5; // ~1.5s per GPS point
+    pts.push({lat,lon,ele,ch:cum,vidT});
+  }
+  const total=pts[pts.length-1].ch;
+  const stns=[
+    {ch:0,vidT:0,lat:pts[0].lat,lon:pts[0].lon,ele:pts[0].ele,params:{Bn:5.5,Bm:3.5,h_ranh:.5,b_ranh:.4,m_ranh:1,m_dao:1,h_dao:2,m_dap:1.5,h_dap:2.5,surface:'CP'}},
+    {ch:total*.4,vidT:60,lat:0,lon:0,ele:0,params:{Bn:6,Bm:3.5,h_ranh:.6,b_ranh:.4,m_ranh:1,m_dao:1.25,h_dao:4.5,m_dap:1.5,h_dap:3.5,surface:'CP'}},
+    {ch:total,vidT:120,lat:pts[pts.length-1].lat,lon:pts[pts.length-1].lon,ele:pts[pts.length-1].ele,params:{Bn:5.5,Bm:3.5,h_ranh:.5,b_ranh:.4,m_ranh:1,m_dao:1,h_dao:2.5,m_dap:1.5,h_dap:3,surface:'CP'}},
+  ];
+  loadSurveyData({track:pts,stations:stns});
+  document.getElementById('imp-status').textContent='✓ Dữ liệu mẫu (không có video thực)';
+  document.getElementById('imp-status').style.color='var(--grn)';
+}
+
+function checkARReady(){
+  APP.arReady=!!(APP.desTrack&&APP.videoURL);
+  if(APP.arReady){document.getElementById('ar-no-data').style.display='none';}
+}
+
+// ── Profile & Cross-sections ───────────────────────────────────
+function renderProfile(){
+  const pts=APP.desTrack;if(!pts)return;
+  const W=620,H=160,mL=44,mR=8,mT=8,mB=30;
+  const dW=W-mL-mR,dH=H-mT-mB;
+  const minE=Math.min(...pts.map(p=>p.ele))-3,maxE=Math.max(...pts.map(p=>p.ele))+3,total=pts[pts.length-1].ch;
+  const sx=d=>mL+d/total*dW,sy=e=>mT+dH-(e-minE)/(maxE-minE)*dH;
+  const poly=pts.map(p=>`${sx(p.ch).toFixed(1)},${sy(p.ele).toFixed(1)}`).join(' ');
+  const area=`M${sx(0)},${sy(pts[0].ele)} `+pts.map(p=>`L${sx(p.ch).toFixed(1)},${sy(p.ele).toFixed(1)}`).join(' ')+` L${sx(total)},${mT+dH} L${sx(0)},${mT+dH}Z`;
+  const grid=[0,1,2,3,4].map(i=>{const e=minE+(maxE-minE)*i/4,y=sy(e);return`<line x1="${mL}" y1="${y.toFixed(1)}" x2="${W-mR}" y2="${y.toFixed(1)}" stroke="#dde" stroke-width="0.5" stroke-dasharray="3,3"/><text x="${mL-2}" y="${(y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#888">${e.toFixed(0)}</text>`;}).join('');
+  const stm=APP.desStns.map(s=>`<line x1="${sx(s.ch)}" y1="${mT}" x2="${sx(s.ch)}" y2="${mT+dH}" stroke="#ff8800" stroke-width="1" stroke-dasharray="3,2" opacity=".8"/>`).join('');
+  document.getElementById('prof-wrap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block"><rect x="${mL}" y="${mT}" width="${dW}" height="${dH}" fill="#f5f8fb"/>${grid}<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#2a88cc" stop-opacity=".5"/><stop offset="100%" stop-color="#2a88cc" stop-opacity=".03"/></linearGradient></defs><path d="${area}" fill="url(#g)"/><polyline points="${poly}" fill="none" stroke="#1a6aaa" stroke-width="2"/>${stm}</svg>`;
+}
+
+function buildCS(p,ch,ele,idx){
+  const{Bn,Bm,h_ranh,b_ranh,m_ranh=1,m_dao,h_dao,m_dap,h_dap}=p;
+  const lS=Bn/2+b_ranh+m_ranh*h_ranh+m_dao*h_dao+1.6,rS=Bn/2+m_dap*h_dap+1.6,tS=h_dao+1.3,bS=Math.max(h_ranh,h_dap)+1.1;
+  const W=700,H=290,mT=36,mB=58,mL=14,mR=10;
+  const Sh=(H-mT-mB)/(tS+bS),Sw=(W-mL-mR)/(lS+rS),SC=Math.min(Sh,Sw,28);
+  const CX=mL+lS*SC,RY=mT+tS*SC;
+  const xpL=CX-(Bm/2)*SC,xpR=CX+(Bm/2)*SC,xnL=CX-(Bn/2)*SC,xnR=CX+(Bn/2)*SC;
+  const rA=[xnL,RY],rB=[xnL,RY+h_ranh*SC],rC=[xnL-b_ranh*SC,RY+h_ranh*SC],rD=[xnL-(b_ranh+m_ranh*h_ranh)*SC,RY];
+  const tdT=[rD[0]-m_dao*h_dao*SC,RY-h_dao*SC],tpB=[xnR+m_dap*h_dap*SC,RY+h_dap*SC];
+  const pp=a=>`${a[0].toFixed(1)},${a[1].toFixed(1)}`;
+  const dh=(x1,x2,y,l)=>`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#2a4a6a" stroke-width=".6" marker-start="url(#da)" marker-end="url(#da)"/><line x1="${x1}" y1="${y-3}" x2="${x1}" y2="${y+3}" stroke="#2a4a6a" stroke-width=".6"/><line x1="${x2}" y1="${y-3}" x2="${x2}" y2="${y+3}" stroke="#2a4a6a" stroke-width=".6"/><text x="${(x1+x2)/2}" y="${y+11}" text-anchor="middle" font-size="8" fill="#2a4a6a">${l}</text>`;
+  const dv=(x,y1,y2,l)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#2a4a6a" stroke-width=".6" marker-start="url(#da)" marker-end="url(#da)"/><line x1="${x-3}" y1="${y1}" x2="${x+3}" y2="${y1}" stroke="#2a4a6a" stroke-width=".6"/><line x1="${x-3}" y1="${y2}" x2="${x+3}" y2="${y2}" stroke="#2a4a6a" stroke-width=".6"/><text x="${x-5}" y="${(y1+y2)/2+3}" text-anchor="end" font-size="8" fill="#2a4a6a">${l}</text>`;
+  const PAV=Math.max(4,SC*.14),NEN=Math.max(3,SC*.1);
+  const desOv=APP.desPrm?`<line x1="${CX-(APP.desPrm.Bn/2)*SC}" y1="${RY}" x2="${CX+(APP.desPrm.Bn/2)*SC}" y2="${RY}" stroke="#ff8800" stroke-width="2.5" stroke-dasharray="6,3" opacity=".9"/>`:'';
+  return`<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;background:white"><defs><pattern id="pr" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="5" stroke="#bbb" stroke-width=".7"/></pattern><pattern id="pf" x="0" y="0" width="5" height="5" patternUnits="userSpaceOnUse"><line x1="0" y1="5" x2="5" y2="0" stroke="#8ab88a" stroke-width=".7"/></pattern><marker id="da" markerWidth="4" markerHeight="4" refX="2" refY="2" orient="auto-start-reverse"><path d="M0,0L4,2L0,4Z" fill="#2a4a6a"/></marker></defs><rect x="0" y="0" width="${W}" height="${mT}" fill="#0f2840"/><text x="${W/2}" y="14" text-anchor="middle" font-size="11" fill="#7ec8f0" font-weight="bold">MẶT CẮT NGANG — ${kmLbl(ch)}</text><text x="${W/2}" y="28" text-anchor="middle" font-size="9" fill="#4a8aaa">Cao độ ${ele.toFixed(2)}m  |  Bn=${Bn}m  Bm=${Bm}m  |  MC#${idx+1}${APP.desPrm?' [TK:Bn='+APP.desPrm.Bn+'m]':''}</text><polygon points="${pp(tdT)} ${pp([tdT[0]-18,tdT[1]])} ${pp([tdT[0]-18,RY])} ${pp(rD)} ${pp([xnL,RY])}" fill="#f0e6d4"/><polygon points="${pp(tdT)} ${pp(rD)} ${pp([rD[0]-8,rD[1]])}" fill="url(#pr)" opacity=".6"/><polygon points="${pp([xnR,RY])} ${pp(tpB)} ${pp([tpB[0]+20,tpB[1]])} ${pp([xnR+20,RY])}" fill="#d8f0d4"/><polygon points="${pp([xnR,RY])} ${pp(tpB)} ${pp([tpB[0]+8,tpB[1]])}" fill="url(#pf)" opacity=".6"/><polygon points="${pp(rA)} ${pp(rB)} ${pp(rC)} ${pp(rD)}" fill="#c0e0f8" stroke="#1a6aaa" stroke-width="1.5"/><rect x="${xnL}" y="${RY}" width="${xnR-xnL}" height="${NEN}" fill="#c4a960" stroke="#8a6030" stroke-width=".7"/><rect x="${xpL}" y="${RY-PAV}" width="${xpR-xpL}" height="${PAV}" fill="#333" stroke="#111" stroke-width="1"/><line x1="${xnL}" y1="${RY}" x2="${xnR}" y2="${RY}" stroke="#333" stroke-width="2"/><line x1="${tdT[0]}" y1="${tdT[1]}" x2="${rD[0]}" y2="${rD[1]}" stroke="#8a4020" stroke-width="2.2"/><line x1="${xnR}" y1="${RY}" x2="${tpB[0]}" y2="${tpB[1]}" stroke="#2a7030" stroke-width="2.2"/><line x1="${CX}" y1="${mT+2}" x2="${CX}" y2="${RY+NEN+12}" stroke="#cc2222" stroke-width=".7" stroke-dasharray="6,3"/>${desOv}<text x="${(tdT[0]+rD[0])/2-14}" y="${(tdT[1]+RY)/2}" text-anchor="end" font-size="8" fill="#8a4020" font-weight="bold">TALUY ĐÀO 1:${m_dao}</text><text x="${(xnR+tpB[0])/2+12}" y="${(RY+tpB[1])/2}" text-anchor="start" font-size="8" fill="#2a7030" font-weight="bold">TALUY ĐẮP 1:${m_dap}</text>${h_ranh*SC>18?`<text x="${(rA[0]+rC[0])/2}" y="${RY+h_ranh*SC*.6+3}" text-anchor="middle" font-size="7" fill="#1a5a9a">rãnh</text>`:''}${dh(xnL,xnR,RY+NEN+42,`Bn=${Bn.toFixed(1)}m`)}${dh(xpL,xpR,RY+NEN+28,`Bm=${Bm.toFixed(1)}m`)}${dv(tdT[0]-10,tdT[1],RY,`h=${h_dao.toFixed(1)}m`)}${dv(tpB[0]+10,RY,tpB[1],`h=${h_dap.toFixed(1)}m`)}`;
+}
+function renderCS(){
+  const secs=resample(APP.desTrack,15);const PER=3,page=APP.csPage,maxP=Math.ceil(secs.length/PER)-1;
+  document.getElementById('cs-pg').textContent=`${page+1}/${maxP+1} (${secs.length}MC)`;
+  const start=page*PER,end=Math.min(start+PER,secs.length);
+  document.getElementById('cs-wrap').innerHTML=secs.slice(start,end).map((s,i)=>{const p=mergeD(interpP(s.ch));return`<div style="margin-bottom:7px">${buildCS(p,s.ch,s.ele,start+i)}</div>`;}).join('');
+}
+function csPage(d){const secs=resample(APP.desTrack,15);APP.csPage=Math.max(0,Math.min(APP.csPage+d,Math.ceil(secs.length/3)-1));renderCS();}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// AR VIDEO + THREE.JS DESIGN OVERLAY
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const AR3={
+  inited:false, playing:false,
+  scene:null, camera:null, renderer:null,
+  overlayGroup:null,
+  raf:null,
+};
+
+function initAR(){
+  const canvas=document.getElementById('ar-canvas');
+  const cont=document.getElementById('ar-wrap');
+
+  // Three.js with transparent background
+  const ren=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true,logarithmicDepthBuffer:true});
+  ren.setClearColor(0x000000,0); // fully transparent
+  ren.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  ren.autoClear=false;
+  AR3.renderer=ren;
+
+  const cam=new THREE.PerspectiveCamera(APP.calib.fov,1,.05,500);
+  AR3.camera=cam;
+
+  const sc=new THREE.Scene();
+  AR3.scene=sc;
+  sc.add(new THREE.AmbientLight(0xffffff,.8));
+  const sun=new THREE.DirectionalLight(0xfff8e0,.9);sun.position.set(10,20,5);sc.add(sun);
+
+  resizeAR();
+  window.addEventListener('resize',resizeAR);
+
+  // Render loop
+  function loop(){
+    AR3.raf=requestAnimationFrame(loop);
+    const vid=document.getElementById('ar-vid');
+    if(!AR3.overlayGroup||!vid.src)return;
+    // Sync camera to video time
+    syncARCamera(vid.currentTime);
+    // Update timeline
+    if(vid.duration){
+      document.getElementById('ar-timeline').value=vid.currentTime/vid.duration*100;
+      document.getElementById('ar-time').textContent=fmtTime2(vid.currentTime)+'/'+fmtTime2(vid.duration);
+    }
+    ren.clear(true,true,true);
+    ren.render(sc,cam);
+  }
+  loop();
+  AR3.inited=true;
+  AR3.rebuild();
+}
+
+function fmtTime2(s){const m=Math.floor(s/60),sec=Math.floor(s%60);return`${m}:${String(sec).padStart(2,'0')}`;}
+
+function resizeAR(){
+  const c=document.getElementById('ar-wrap');
+  const w=c.clientWidth,h=c.clientHeight;
+  if(!w||!h)return;
+  AR3.renderer.setSize(w,h,false);
+  AR3.camera.aspect=w/h;
+  AR3.camera.updateProjectionMatrix();
+}
+
+// Build the road design overlay geometry
+AR3.rebuild=function(){
+  if(!AR3.inited||!APP.desTrack||APP.desTrack.length<2)return;
+  const sc=AR3.scene;
+  if(AR3.overlayGroup){sc.remove(AR3.overlayGroup);}
+  AR3.overlayGroup=new THREE.Group();sc.add(AR3.overlayGroup);
+  const og=AR3.overlayGroup;
+
+  // Convert GPS to local XZ coords
+  const track=APP.desTrack;
+  const refLat=track[0].lat,refLon=track[0].lon,refEle=track[0].ele;
+  const pts3=track.map(p=>({
+    x:(p.lon-refLon)*Math.PI/180*R6*Math.cos(refLat*Math.PI/180),
+    y:(p.ele-refEle)*1.5,
+    z:-(p.lat-refLat)*Math.PI/180*R6,
+    ch:p.ch,
+    vidT:p.vidT
+  }));
+
+  AR3.pts3=pts3;
+  AR3.refLat=refLat;AR3.refLon=refLon;AR3.refEle=refEle;
+  AR3.curve=new THREE.CatmullRomCurve3(pts3.map(p=>new THREE.Vector3(p.x,p.y,p.z)),false,'catmullrom',.5);
+  AR3.totalLen=track[track.length-1].ch;
+  AR3.totalVidT=track[track.length-1].vidT||track.length*1.5;
+
+  const N=Math.min(400,track.length*3);
+  const curvePts=AR3.curve.getPoints(N);
+  const chStep=AR3.totalLen/N;
+
+  // Helper to get tangent/right at point index
+  function getTR(i){
+    let tang;
+    if(i===0)tang=curvePts[1].clone().sub(curvePts[0]);
+    else if(i===N)tang=curvePts[N].clone().sub(curvePts[N-1]);
+    else tang=curvePts[Math.min(i+1,N)].clone().sub(curvePts[Math.max(i-1,0)]);
+    tang.normalize();
+    const ht=new THREE.Vector3(tang.x,0,tang.z).normalize();
+    return{tang,right:new THREE.Vector3(-ht.z,0,ht.x)};
+  }
+
+  // ── Layer: New pavement extent (semi-transparent asphalt) ──
+  if(APP.layers.pav){
+    const pavPos=[],pavIdx=[];
+    curvePts.forEach((pt,i)=>{
+      const p=mergeD(interpP(i*chStep));
+      const{right}=getTR(i);
+      const{Bn,Bm}=p;
+      const existBm=interpP(i*chStep).Bm; // existing
+      // Show new pav area ONLY on extensions beyond existing
+      const newLeftEdge=-Bm/2, newRightEdge=Bm/2;
+      const oldLeftEdge=-existBm/2, oldRightEdge=existBm/2;
+
+      // Left extension
+      const llPt=pt.clone().add(right.clone().multiplyScalar(newLeftEdge)).add(new THREE.Vector3(0,.06,0));
+      const lrPt=pt.clone().add(right.clone().multiplyScalar(oldLeftEdge)).add(new THREE.Vector3(0,.06,0));
+      // Right extension
+      const rlPt=pt.clone().add(right.clone().multiplyScalar(oldRightEdge)).add(new THREE.Vector3(0,.06,0));
+      const rrPt=pt.clone().add(right.clone().multiplyScalar(newRightEdge)).add(new THREE.Vector3(0,.06,0));
+      // Center (always show)
+      const cl=pt.clone().add(right.clone().multiplyScalar(newLeftEdge)).add(new THREE.Vector3(0,.06,0));
+      const cr=pt.clone().add(right.clone().multiplyScalar(newRightEdge)).add(new THREE.Vector3(0,.06,0));
+
+      pavPos.push(cl.x,cl.y,cl.z, cr.x,cr.y,cr.z);
+      if(i>0){
+        const a=(i-1)*2,b=(i-1)*2+1,c=i*2,d=i*2+1;
+        pavIdx.push(a,c,b,b,c,d);
+      }
+    });
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(pavPos,3));
+    geo.setIndex(pavIdx);geo.computeVertexNormals();
+    const mat=new THREE.MeshBasicMaterial({color:0x222222,transparent:true,opacity:.65,side:THREE.DoubleSide,depthWrite:false});
+    og.add(new THREE.Mesh(geo,mat));
+  }
+
+  // ── Layer: New road edge lines (bright orange) ──
+  if(APP.layers.edge){
+    const lineMat=new THREE.LineBasicMaterial({color:0xff6600,linewidth:2});
+    const dashMat=new THREE.LineDashedMaterial({color:0xffdd00,linewidth:1,dashSize:2,gapSize:1});
+    [-1,1].forEach(side=>{
+      const edgePts=[],clPts=[];
+      curvePts.forEach((pt,i)=>{
+        const p=mergeD(interpP(i*chStep));
+        const{right}=getTR(i);
+        const halfBn=p.Bn/2*side;
+        const halfBm=p.Bm/2*side;
+        const ep=pt.clone().add(right.clone().multiplyScalar(halfBn)).add(new THREE.Vector3(0,.12,0));
+        const cp=pt.clone().add(right.clone().multiplyScalar(halfBm)).add(new THREE.Vector3(0,.12,0));
+        edgePts.push(ep);clPts.push(cp);
+      });
+      const eGeo=new THREE.BufferGeometry().setFromPoints(edgePts);
+      og.add(new THREE.Line(eGeo,lineMat));
+      const cGeo=new THREE.BufferGeometry().setFromPoints(clPts);
+      const dashLine=new THREE.Line(cGeo,dashMat);
+      dashLine.computeLineDistances();og.add(dashLine);
+    });
+    // Center line (yellow dashed)
+    const clPts2=curvePts.filter((_,i)=>i%3===0).map(p=>p.clone().add(new THREE.Vector3(0,.15,0)));
+    const clGeo=new THREE.BufferGeometry().setFromPoints(clPts2);
+    const clLine=new THREE.Line(clGeo,new THREE.LineDashedMaterial({color:0xffee00,dashSize:3,gapSize:2}));
+    clLine.computeLineDistances();og.add(clLine);
+  }
+
+  // ── Layer: New drainage ditch (concrete cyan) ──
+  if(APP.layers.ranh){
+    const ditchPos=[],ditchIdx=[];
+    curvePts.forEach((pt,i)=>{
+      const p=mergeD(interpP(i*chStep));
+      const{right}=getTR(i);
+      const{Bn,h_ranh=.5,b_ranh=.4,m_ranh=1}=p;
+      const ranhW=b_ranh+m_ranh*h_ranh;
+      // Ditch on left (cut) side
+      const dTop1=pt.clone().add(right.clone().multiplyScalar(-Bn/2-.02)).add(new THREE.Vector3(0,.04,0));
+      const dBot1=pt.clone().add(right.clone().multiplyScalar(-Bn/2-ranhW*.7)).add(new THREE.Vector3(0,-h_ranh*.6,0));
+      const dTop2=pt.clone().add(right.clone().multiplyScalar(-Bn/2-ranhW)).add(new THREE.Vector3(0,.04,0));
+
+      ditchPos.push(dTop1.x,dTop1.y,dTop1.z, dBot1.x,dBot1.y,dBot1.z, dTop2.x,dTop2.y,dTop2.z);
+      if(i>0){
+        const base=(i-1)*3;
+        ditchIdx.push(base,base+3,base+1,base+1,base+3,base+4,base+1,base+4,base+2,base+2,base+4,base+5);
+      }
+    });
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.Float32BufferAttribute(ditchPos,3));
+    geo.setIndex(ditchIdx);geo.computeVertexNormals();
+    const mat=new THREE.MeshBasicMaterial({color:0x44aacc,transparent:true,opacity:.7,side:THREE.DoubleSide,depthWrite:false});
+    og.add(new THREE.Mesh(geo,mat));
+
+    // Ditch edge line
+    const dEdgePts=curvePts.map((pt,i)=>{
+      const p=mergeD(interpP(i*chStep));const{right}=getTR(i);
+      return pt.clone().add(right.clone().multiplyScalar(-p.Bn/2)).add(new THREE.Vector3(0,.18,0));
+    });
+    const dGeo=new THREE.BufferGeometry().setFromPoints(dEdgePts);
+    og.add(new THREE.Line(dGeo,new THREE.LineBasicMaterial({color:0x00ccff})));
+  }
+
+  // ── Dimension labels (flat billboards at key stations) ──
+  APP.desStns.forEach(stn=>{
+    if(!stn.ch&&stn.ch!==0)return;
+    const t=stn.ch/AR3.totalLen;
+    if(t<0||t>1)return;
+    const pos=AR3.curve.getPoint(t);
+    const tang=AR3.curve.getTangent(t).normalize();
+    const right=new THREE.Vector3(-tang.z,0,tang.x);
+    const p=mergeD(interpP(stn.ch));
+
+    // Label billboard at right side
+    const labelPos=pos.clone().add(right.clone().multiplyScalar(p.Bn/2+2)).add(new THREE.Vector3(0,2,0));
+    const canvas=document.createElement('canvas');
+    canvas.width=220;canvas.height=80;
+    const ctx=canvas.getContext('2d');
+    ctx.fillStyle='rgba(0,0,0,.75)';roundRect(ctx,0,0,220,80,8);ctx.fill();
+    ctx.strokeStyle='rgba(255,160,0,.9)';ctx.lineWidth=1.5;roundRect(ctx,0,0,220,80,8);ctx.stroke();
+    ctx.fillStyle='#ffd700';ctx.font='bold 14px Arial';ctx.fillText(kmLbl(stn.ch),8,20);
+    ctx.fillStyle='#fff';ctx.font='11px Arial';
+    ctx.fillText(`Bn=${p.Bn}m  Bm=${p.Bm}m`,8,38);
+    ctx.fillText(`Đào 1:${p.m_dao} h=${p.h_dao}m`,8,54);
+    ctx.fillText(`Đắp 1:${p.m_dap} h=${p.h_dap}m`,8,70);
+    const tex=new THREE.CanvasTexture(canvas);
+    const spr=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthWrite:false}));
+    spr.position.copy(labelPos);spr.scale.set(6,2.2,1);
+    og.add(spr);
+  });
+};
+
+function roundRect(ctx,x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();}
+
+// Sync AR camera to video time
+function syncARCamera(vidT){
+  if(!AR3.curve||!APP.desTrack)return;
+
+  // Find GPS position at this video time
+  const track=APP.desTrack;
+  let gpsPos=null,gpsCh=0;
+  if(track[0].vidT!==undefined){
+    // Have vidT in track data
+    let lo=0,hi=track.length-1;
+    while(lo<hi-1){const m=(lo+hi)>>1;(track[m].vidT||0)<=vidT?lo=m:hi=m;}
+    const tl=track[lo],th=track[hi];
+    const t=(tl.vidT===th.vidT)?0:(vidT-(tl.vidT||0))/((th.vidT||0)-(tl.vidT||0));
+    const tc=Math.max(0,Math.min(1,t));
+    gpsPos={
+      x:tl.x!==undefined?tl.x+(tc*(th.x-tl.x)):(AR3.pts3[lo].x+tc*(AR3.pts3[hi].x-AR3.pts3[lo].x)),
+      y:AR3.pts3[lo].y+tc*(AR3.pts3[hi].y-AR3.pts3[lo].y),
+      z:AR3.pts3[lo].z+tc*(AR3.pts3[hi].z-AR3.pts3[lo].z),
+    };
+    gpsCh=tl.ch+tc*(th.ch-tl.ch);
+  } else {
+    // Fallback: assume uniform speed
+    const totalVidT=AR3.totalVidT||120;
+    const tNorm=Math.max(0,Math.min(1,vidT/totalVidT));
+    const pos3=AR3.curve.getPoint(tNorm);
+    gpsPos={x:pos3.x,y:pos3.y,z:pos3.z};
+    gpsCh=tNorm*AR3.totalLen;
+  }
+
+  // Camera position: at GPS position + calibration height
+  const camPos=new THREE.Vector3(gpsPos.x, gpsPos.y+APP.calib.h, gpsPos.z);
+  camPos.x+=AR3.curve.getTangent(Math.min(gpsCh/AR3.totalLen,.99)).clone().cross(new THREE.Vector3(0,1,0)).normalize().x*APP.calib.side;
+  AR3.camera.position.copy(camPos);
+
+  // Camera look direction: forward along road + tilt
+  const tNorm2=Math.max(0,Math.min(.99,gpsCh/AR3.totalLen));
+  const tang=AR3.curve.getTangent(tNorm2);
+  const tiltRad=APP.calib.tilt*Math.PI/180;
+  const lookTarget=new THREE.Vector3(
+    camPos.x+tang.x*20,
+    camPos.y+Math.tan(tiltRad)*20,
+    camPos.z+tang.z*20
+  );
+  AR3.camera.lookAt(lookTarget);
+  AR3.camera.fov=APP.calib.fov;
+  AR3.camera.updateProjectionMatrix();
+
+  // Update HUD
+  document.getElementById('ar-km').textContent=kmLbl(gpsCh);
+}
+
+// ── AR controls ──────────────────────────────────────────────
+function arPlay(){
+  const vid=document.getElementById('ar-vid');
+  if(vid.paused){vid.play();document.getElementById('btn-arplay').textContent='⏸';}
+  else{vid.pause();document.getElementById('btn-arplay').textContent='▶';}
+}
+function arReset(){const vid=document.getElementById('ar-vid');vid.currentTime=0;}
+function seekVideo(v){const vid=document.getElementById('ar-vid');if(vid.duration)vid.currentTime=vid.duration*v/100;}
+function togLayer(name){
+  APP.layers[name]=!APP.layers[name];
+  document.getElementById('tog-'+name).classList.toggle('on',APP.layers[name]);
+  if(AR3.inited)AR3.rebuild();
+}
+function togCalib(){document.getElementById('ar-calib').classList.toggle('on');}
+function setCalib(key,v){
+  APP.calib[key]=parseFloat(v);
+  document.getElementById('cv-'+key).textContent=parseFloat(v).toFixed(1);
+  if(key==='fov'){AR3.camera.fov=APP.calib.fov;AR3.camera.updateProjectionMatrix();}
+}
+function togBeforeAfter(){
+  APP.beforeAfter=!APP.beforeAfter;
+  const og=AR3.overlayGroup;
+  if(og)og.visible=!APP.beforeAfter;
+  document.getElementById('btn-ba').textContent=APP.beforeAfter?'◑':'◐';
+  toast(APP.beforeAfter?'Hiện trạng (không overlay)':'Thiết kế overlay ON');
+}
+function togFullAR(){
+  const c=document.getElementById('p-ar');
+  if(document.fullscreenElement){document.exitFullscreen();}
+  else{c.requestFullscreen?.();}
+}
+
+// ── Calibration display value init ───────────────────────────
+function initCalibDisplay(){
+  document.getElementById('cv-h').textContent=APP.calib.h;
+  document.getElementById('cv-tilt').textContent=APP.calib.tilt;
+  document.getElementById('cv-fov').textContent=APP.calib.fov;
+  document.getElementById('cv-side').textContent=APP.calib.side;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// TAB SWITCHING
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function ST(id){
+  document.querySelectorAll('.tb').forEach((b,i)=>b.classList.toggle('act',['survey','design','ar'][i]===id));
+  document.querySelectorAll('.pane').forEach(p=>{
+    const tid=p.id.replace('p-','');
+    p.classList.toggle('act',tid===id);
+  });
+  if(id==='ar'){
+    if(!AR3.inited)initAR();
+    setTimeout(()=>{
+      resizeAR();
+      if(APP.desTrack&&!AR3.overlayGroup)AR3.rebuild();
+      // Check if we have data
+      if(APP.desTrack&&APP.videoURL){
+        document.getElementById('ar-no-data').style.display='none';
+        document.getElementById('ar-vid').src=APP.videoURL;
+      } else if(APP.desTrack&&!APP.videoURL){
+        document.getElementById('ar-no-data').style.display='none';
+        document.getElementById('ar-vid').style.display='none';
+      }
+    },80);
+  }
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// INIT
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+window.addEventListener('DOMContentLoaded',()=>{
+  initCalibDisplay();
+  toggleParams(); // open params by default
+  // Pre-open camera preview (without recording)
+  navigator.mediaDevices?.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})
+    .then(stream=>{
+      APP.camStream=stream;
+      const vid=document.getElementById('survey-vid');
+      vid.srcObject=stream;vid.play();
+      document.getElementById('no-cam-msg').style.display='none';
+    })
+    .catch(()=>{/* camera not yet approved */});
+});
+</script>
+</body>
+</html>
